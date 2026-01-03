@@ -18,7 +18,7 @@ class QuestionAdmin(admin.ModelAdmin):
         "category",
         "question_type",
         "difficulty_level",
-        "status_colored",
+        "status",
         "is_public",
         "times_attempted",
     )
