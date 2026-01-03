@@ -6,7 +6,6 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from src.models.branch import Branch, Category, SubBranch
-from src.models.user import UserProfile
 
 
 class BranchApiTests(APITestCase):
