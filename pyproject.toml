@@ -21,6 +21,9 @@ dependencies = [
     "channels>=4.3.2",
     "django-redis>=6.0.0",
     "celery>=5.6.1",
+    "django-filter>=25.2",
+    "dj-rest-auth[with-social]>=5.0.2",
+    "django-allauth>=0.57.2",
 ]
 
 [tool.ruff]
