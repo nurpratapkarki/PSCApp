@@ -10,3 +10,18 @@ class AppSettingsAdmin(admin.ModelAdmin):
     list_filter = ("is_active",)
     search_fields = ("setting_key", "description")
     readonly_fields = ("updated_at",)
+
+    fieldsets = (
+        (
+            "Config",
+            {
+                "fields": ("setting_key", "setting_value", "description"),
+            },
+        ),
+        (
+            "Status",
+            {
+                "fields": ("is_active", "updated_at"),
+            },
+        ),
+    )

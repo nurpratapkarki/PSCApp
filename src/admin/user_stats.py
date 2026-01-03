@@ -27,6 +27,26 @@ class UserProgressAdmin(admin.ModelAdmin):
     )
     list_filter = ("category",)
     search_fields = ("user__email",)
+    autocomplete_fields = ["user", "category"]
+
+    fieldsets = (
+        (
+            "Progress Context",
+            {
+                "fields": ("user", "category"),
+            },
+        ),
+        (
+            "Calculated Stats",
+            {
+                "fields": (
+                    "accuracy_percentage",
+                    "questions_attempted",
+                    "correct_answers",
+                ),
+            },
+        ),
+    )
 
 
 @admin.register(StudyCollection, site=CustomAdmin)
@@ -34,3 +54,19 @@ class StudyCollectionAdmin(admin.ModelAdmin):
     list_display = ("name", "created_by", "is_private", "get_question_count")
     list_filter = ("is_private",)
     filter_horizontal = ("questions",)
+    autocomplete_fields = ["created_by"]
+
+    fieldsets = (
+        (
+            "Collection Info",
+            {
+                "fields": ("name", "description", "created_by", "is_private"),
+            },
+        ),
+        (
+            "Questions",
+            {
+                "fields": ("questions",),
+            },
+        ),
+    )

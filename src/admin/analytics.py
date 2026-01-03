@@ -16,6 +16,7 @@ class ContributionAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "is_featured", "contribution_year", "contribution_month")
     search_fields = ("user__email", "user__username")
+    readonly_fields = ("created_at",)
     actions = ["approve_contribution", "make_public", "reject_contribution"]
 
     fieldsets = (
@@ -34,7 +35,7 @@ class ContributionAdmin(admin.ModelAdmin):
         (
             "Metadata",
             {
-                "fields": ("created_at", "updated_at"),
+                "fields": ("created_at",),
                 "classes": ("collapse",),
             },
         ),
@@ -65,6 +66,36 @@ class LeaderBoardAdmin(admin.ModelAdmin):
     list_filter = ("time_period", "branch")
     search_fields = ("user__email",)
     ordering = ("time_period", "branch", "rank")
+    readonly_fields = ("last_updated",)
+    autocomplete_fields = ["user", "branch", "sub_branch"]
+
+    fieldsets = (
+        (
+            "Ranking Info",
+            {
+                "fields": ("rank", "previous_rank", "user"),
+            },
+        ),
+        (
+            "Context",
+            {
+                "fields": ("time_period", "branch", "sub_branch"),
+            },
+        ),
+        (
+            "Performance",
+            {
+                "fields": ("total_score", "tests_completed", "accuracy_percentage"),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("last_updated",),
+                "classes": ("collapse",),
+            },
+        ),
+    )
 
 
 @admin.register(DailyActivity, site=CustomAdmin)
@@ -77,3 +108,37 @@ class DailyActivityAdmin(admin.ModelAdmin):
         "active_users",
     )
     ordering = ("-date",)
+    readonly_fields = ("created_at",)
+
+    fieldsets = (
+        (
+            "Date",
+            {
+                "fields": ("date",),
+            },
+        ),
+        (
+            "User Metrics",
+            {
+                "fields": ("new_users", "active_users"),
+            },
+        ),
+        (
+            "Content & Activity",
+            {
+                "fields": (
+                    "questions_added",
+                    "questions_approved",
+                    "mock_tests_taken",
+                    "total_answers_submitted",
+                ),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_at",),
+                "classes": ("collapse",),
+            },
+        ),
+    )

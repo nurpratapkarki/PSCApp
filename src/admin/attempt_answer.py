@@ -34,12 +34,43 @@ class UserAttemptAdmin(admin.ModelAdmin):
         "end_time",
         "total_time_taken",
         "score_obtained",
+        "total_score",
         "percentage",
+        "created_at",
+        "updated_at",
     )
     inlines = [UserAnswerInline]
     date_hierarchy = "created_at"
     list_per_page = 30
     autocomplete_fields = ["user", "mock_test"]
+
+    fieldsets = (
+        (
+            "Session Info",
+            {
+                "fields": ("user", "mock_test", "mode", "status"),
+            },
+        ),
+        (
+            "Results",
+            {
+                "fields": ("score_obtained", "total_score", "percentage"),
+            },
+        ),
+        (
+            "Timing",
+            {
+                "fields": ("start_time", "end_time", "total_time_taken"),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
 
     def description(self, obj):
         if obj.mock_test:

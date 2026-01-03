@@ -61,6 +61,8 @@ class UserProfileAdmin(admin.ModelAdmin):
         "level",
         "total_contributions",
         "total_questions_attempted",
+        "date_joined",
+        "last_login",
     )
     date_hierarchy = "date_joined"
     list_per_page = 25

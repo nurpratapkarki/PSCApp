@@ -60,6 +60,7 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ("name_en", "name_np", "description_en")
     prepopulated_fields = {"slug": ("name_en",)}
     autocomplete_fields = ["target_branch", "target_sub_branch", "created_by"]
+    readonly_fields = ("created_at", "updated_at")
     date_hierarchy = "created_at"
     list_per_page = 30
 

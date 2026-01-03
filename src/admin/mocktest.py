@@ -26,6 +26,7 @@ class MockTestAdmin(admin.ModelAdmin):
     search_fields = ("title_en", "title_np")
     prepopulated_fields = {"slug": ("title_en",)}
     inlines = [MockTestQuestionInline]
+    readonly_fields = ("created_at", "updated_at")
     date_hierarchy = "created_at"
     list_per_page = 30
 
