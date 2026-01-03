@@ -21,6 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Application definition
 THIRD_PARTY_APPS = [
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
@@ -29,7 +30,7 @@ THIRD_PARTY_APPS = [
 ]
 
 USER_DEFINED_APPS = [
-    "src",
+    "src.apps.SrcConfig",
 ]
 
 BUILT_IN_APPS = [
@@ -74,6 +75,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "src.wsgi.application"
+ASGI_APPLICATION = "src.asgi.application"
+
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 
 # Password validation
@@ -176,3 +180,49 @@ CORS_PREFLIGHT_MAX_AGE = 86400  # 24 hours
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
+
+# Celery Configuration
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/0")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+
+# Celery Beat Schedule
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    "update-platform-stats-hourly": {
+        "task": "src.tasks.update_platform_stats",
+        "schedule": crontab(minute=0),
+    },
+    "create-daily-activity-midnight": {
+        "task": "src.tasks.create_daily_activity",
+        "schedule": crontab(hour=0, minute=0),
+    },
+    "update-user-streaks-midnight": {
+        "task": "src.tasks.update_user_streaks",
+        "schedule": crontab(hour=0, minute=5),
+    },
+    "check-streak-notifications-daily": {
+        "task": "src.tasks.check_streak_notifications",
+        "schedule": crontab(hour=18, minute=0),  # e.g., 6 PM
+    },
+    "recalculate-rankings-weekly": {
+        "task": "src.tasks.recalculate_rankings",
+        "schedule": crontab(hour=2, minute=0, day_of_week=1),  # Weekly on Monday
+    },
+    "send-weekly-summary": {
+        "task": "src.tasks.send_weekly_summary",
+        "schedule": crontab(hour=9, minute=0, day_of_week=0),  # Sunday morning
+    },
+    "process-monthly-publications": {
+        "task": "src.tasks.process_publications",
+        "schedule": crontab(day_of_month=1, hour=3, minute=0),
+    },
+    "monthly-maintenance": {
+        "task": "src.tasks.monthly_maintenance",
+        "schedule": crontab(day_of_month=1, hour=4, minute=0),
+    },
+}

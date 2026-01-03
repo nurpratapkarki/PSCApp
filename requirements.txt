@@ -12,3 +12,5 @@ django-cors-headers
 whitenoise
 gunicorn
 dj-database-url
+celery
+redis
