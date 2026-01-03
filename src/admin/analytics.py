@@ -18,6 +18,28 @@ class ContributionAdmin(admin.ModelAdmin):
     search_fields = ("user__email", "user__username")
     actions = ["approve_contribution", "make_public", "reject_contribution"]
 
+    fieldsets = (
+        (
+            "Core Details",
+            {
+                "fields": ("user", "question", "status"),
+            },
+        ),
+        (
+            "Period & Features",
+            {
+                "fields": ("contribution_year", "contribution_month", "is_featured"),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
     @admin.action(description="Approve selected contributions")
     def approve_contribution(self, request, queryset):
         for contribution in queryset:

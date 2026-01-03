@@ -21,8 +21,13 @@ class BranchAdmin(admin.ModelAdmin):
     )
     list_editable = ("is_active", "display_order")
     search_fields = ("name_en", "name_np")
-    prepopulated_fields = {"slug": ("name_en",)}
     inlines = [SubBranchInline]
+    list_per_page = 30
+
+    fieldsets = (
+        (None, {"fields": ("name_en", "name_np", "slug")}),
+        ("Display Settings", {"fields": ("is_active", "display_order")}),
+    )
 
 
 @admin.register(SubBranch, site=CustomAdmin)
@@ -42,6 +47,7 @@ class CategoryAdmin(admin.ModelAdmin):
         "category_type",
         "is_public",
         "is_active",
+        "created_at",
     )
     list_filter = (
         "scope_type",
@@ -50,6 +56,42 @@ class CategoryAdmin(admin.ModelAdmin):
         "is_active",
         "target_branch",
     )
+    list_editable = ("is_public", "is_active")
     search_fields = ("name_en", "name_np", "description_en")
     prepopulated_fields = {"slug": ("name_en",)}
     autocomplete_fields = ["target_branch", "target_sub_branch", "created_by"]
+    date_hierarchy = "created_at"
+    list_per_page = 30
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": ("name_en", "name_np", "slug", "description_en"),
+            },
+        ),
+        (
+            "Targeting & Scope",
+            {
+                "fields": (
+                    "scope_type",
+                    "target_branch",
+                    "target_sub_branch",
+                    "category_type",
+                ),
+            },
+        ),
+        (
+            "Status & Settings",
+            {
+                "fields": ("is_public", "is_active", "created_by"),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )

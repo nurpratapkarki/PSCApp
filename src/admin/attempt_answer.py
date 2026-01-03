@@ -37,6 +37,9 @@ class UserAttemptAdmin(admin.ModelAdmin):
         "percentage",
     )
     inlines = [UserAnswerInline]
+    date_hierarchy = "created_at"
+    list_per_page = 30
+    autocomplete_fields = ["user", "mock_test"]
 
     def description(self, obj):
         if obj.mock_test:

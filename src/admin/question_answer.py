@@ -18,7 +18,7 @@ class QuestionAdmin(admin.ModelAdmin):
         "category",
         "question_type",
         "difficulty_level",
-        "status",
+        "status_colored",
         "is_public",
         "times_attempted",
     )
@@ -30,21 +30,67 @@ class QuestionAdmin(admin.ModelAdmin):
         "created_at",
         "category",
     )
+    list_editable = ("status", "is_public", "difficulty_level")
     search_fields = ("question_text_en", "question_text_np")
     inlines = [AnswerInline]
-    readonly_fields = (
-        "times_attempted",
-        "times_correct",
-        "reported_count",
-        "created_at",
-        "updated_at",
+    fieldsets = (
+        (
+            "Question Content",
+            {
+                "fields": ("category", "question_text_en", "question_text_np"),
+            },
+        ),
+        (
+            "Classification & Settings",
+            {
+                "fields": (
+                    "question_type",
+                    "difficulty_level",
+                    "status",
+                    "is_public",
+                ),
+            },
+        ),
+        (
+            "Engagement Analytics",
+            {
+                "fields": (
+                    "times_attempted",
+                    "times_correct",
+                    "reported_count",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
     )
-    actions = ["make_public", "make_draft"]
 
     def short_question(self, obj):
         return obj.question_text_en[:50] + "..." if obj.question_text_en else "No Text"
 
     short_question.short_description = "Question"
+
+    def status_colored(self, obj):
+        colors = {
+            "PUBLIC": "green",
+            "DRAFT": "orange",
+            "PENDING": "blue",
+            "REJECTED": "red",
+        }
+        color = colors.get(obj.status, "grey")
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color,
+            obj.get_status_display(),
+        )
+
+    status_colored.short_description = "Status"
 
     @admin.action(description="Mark selected questions as Public")
     def make_public(self, request, queryset):
@@ -62,13 +108,35 @@ class QuestionReportAdmin(admin.ModelAdmin):
     list_display = (
         "question_link",
         "reason",
-        "status",
+        "status_colored",
         "reported_by",
         "created_at",
     )
     list_filter = ("status", "reason", "created_at")
     readonly_fields = ("created_at", "resolved_at")
     actions = ["mark_resolved", "mark_rejected"]
+
+    fieldsets = (
+        (
+            "Report Details",
+            {
+                "fields": ("question", "reason", "description", "reported_by"),
+            },
+        ),
+        (
+            "Resolution Info",
+            {
+                "fields": ("status", "resolved_by", "resolved_at", "resolution_note"),
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": ("created_at",),
+                "classes": ("collapse",),
+            },
+        ),
+    )
 
     def question_link(self, obj):
         return format_html(
@@ -78,6 +146,21 @@ class QuestionReportAdmin(admin.ModelAdmin):
         )
 
     question_link.short_description = "Question"
+
+    def status_colored(self, obj):
+        colors = {
+            "RESOLVED": "green",
+            "PENDING": "orange",
+            "REJECTED": "red",
+        }
+        color = colors.get(obj.status, "grey")
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color,
+            obj.get_status_display(),
+        )
+
+    status_colored.short_description = "Status"
 
     @admin.action(description="Mark report as Resolved")
     def mark_resolved(self, request, queryset):

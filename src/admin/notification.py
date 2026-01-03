@@ -14,4 +14,8 @@ class NotificationAdmin(admin.ModelAdmin):
         "created_at",
     )
     list_filter = ("notification_type", "is_read", "created_at")
+    list_editable = ("is_read",)
     search_fields = ("user__email", "title_en", "message_en")
+    date_hierarchy = "created_at"
+    list_per_page = 50
+    autocomplete_fields = ["user"]
