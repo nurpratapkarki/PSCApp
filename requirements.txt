@@ -13,4 +13,7 @@ whitenoise
 gunicorn
 dj-database-url
 celery
-redis
+django-redis
+django-filter
+django-allauth
+dj-rest-auth[with_social]
