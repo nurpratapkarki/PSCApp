@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
@@ -8,18 +10,19 @@ from src.models.branch import Branch, Category, SubBranch
 from src.models.mocktest import MockTest, MockTestQuestion
 from src.models.platform_stats import PlatformStats
 from src.models.question_answer import Answer, Question
-from src.models.user import UserProfile
 
 
 class Phase1LogicTests(TestCase):
     def setUp(self):
         # Setup basic data
+        self.email = f"test_{uuid4().hex[:8]}@example.com"
         self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="password"
+            username="testuser", email=self.email, password="password"
         )
-        self.profile = UserProfile.objects.create(
-            google_auth_user=self.user, email="test@example.com", full_name="Test User"
-        )
+        # Profile is created by signal
+        self.profile = self.user.profile
+        self.profile.full_name = "Test User"
+        self.profile.save()
 
         self.branch = Branch.objects.create(name_en="Branch 1", name_np="Branch 1")
         self.sub_branch = SubBranch.objects.create(
@@ -53,10 +56,11 @@ class Phase1LogicTests(TestCase):
         self.assertEqual(self.profile.get_current_rank(), 1)
 
         # Add another user with more XP
-        user2 = User.objects.create_user(username="user2", email="user2@example.com")
-        UserProfile.objects.create(
-            google_auth_user=user2, email="user2@example.com", experience_points=200
-        )
+        email2 = f"user2_{uuid4().hex[:8]}@example.com"
+        user2 = User.objects.create_user(username="user2", email=email2)
+        # Profile created by signal
+        user2.profile.experience_points = 200
+        user2.profile.save()
 
         self.assertEqual(self.profile.get_current_rank(), 2)
 
@@ -183,7 +187,8 @@ class Phase1LogicTests(TestCase):
     def test_leaderboard_recalculation(self):
         """Test LeaderBoard.recalculate_rankings"""
         # Create 2 users with attempts
-        user2 = User.objects.create_user(username="user2_lb", email="u2@e.com")
+        email2 = f"u2_{uuid4().hex[:8]}@e.com"
+        user2 = User.objects.create_user(username="user2_lb", email=email2)
 
         mt = MockTest.objects.create(
             title_en="Lb Test",

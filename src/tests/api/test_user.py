@@ -1,19 +1,22 @@
+from uuid import uuid4
+
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from src.models.user import UserProfile
-
 
 class UserProfileTests(APITestCase):
     def setUp(self):
+        self.email = f"test_{uuid4().hex[:8]}@example.com"
         self.user = User.objects.create_user(
-            username="testuser", password="testpassword", email="test@example.com"
+            username="testuser", password="testpassword", email=self.email
         )
-        self.profile = UserProfile.objects.create(
-            google_auth_user=self.user, email="test@example.com", full_name="Test User"
-        )
+        # Profile is created by signal
+        self.profile = self.user.profile
+        self.profile.full_name = "Test User"
+        self.profile.save()
+
         self.client = APIClient()
         self.url = reverse("user-profile")
 
@@ -25,7 +28,7 @@ class UserProfileTests(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["email"], "test@example.com")
+        self.assertEqual(response.data["email"], self.email)
         self.assertEqual(response.data["full_name"], "Test User")
 
     def test_update_profile(self):
