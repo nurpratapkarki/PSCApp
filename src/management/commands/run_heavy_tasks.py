@@ -1,8 +1,9 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from src.models.analytics import LeaderBoard, DailyActivity
-from src.models.platform_stats import PlatformStats
+
+from src.models.analytics import DailyActivity, LeaderBoard
 from src.models.branch import Branch
+from src.models.platform_stats import PlatformStats
 
 
 class Command(BaseCommand):

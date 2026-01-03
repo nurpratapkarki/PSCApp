@@ -1,8 +1,5 @@
-#!/usr/bin/env python
-
 """generated with djinit"""
 
-"""Django's command-line utility for administrative tasks."""
 import os
 import sys
 

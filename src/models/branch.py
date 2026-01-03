@@ -46,6 +46,8 @@ class Branch(models.Model):
         return self.sub_branches.filter(is_active=True)
 
     def get_total_questions(self):
+        from .question_answer import Question
+
         return Question.objects.filter(category__target_branch=self).count()
 
     def get_active_users_count(self):
@@ -238,4 +240,6 @@ class SubBranch(models.Model):
         super().save(*args, **kwargs)
 
     def get_total_questions(self):
+        from .question_answer import Question
+
         return Question.objects.filter(category__target_sub_branch=self).count()

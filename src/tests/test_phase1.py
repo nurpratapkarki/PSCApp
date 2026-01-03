@@ -1,14 +1,14 @@
-from django.test import TestCase
 from django.contrib.auth.models import User
-from src.models.user import UserProfile
-from src.models.branch import Branch, SubBranch, Category
-from src.models.question_answer import Question, Answer
-from src.models.mocktest import MockTest, MockTestQuestion
-from src.models.attempt_answer import UserAttempt, UserAnswer
-from src.models.analytics import LeaderBoard, Contribution
-from src.models.platform_stats import PlatformStats
+from django.test import TestCase
 from django.utils import timezone
-from datetime import timedelta
+
+from src.models.analytics import LeaderBoard
+from src.models.attempt_answer import UserAnswer, UserAttempt
+from src.models.branch import Branch, Category, SubBranch
+from src.models.mocktest import MockTest, MockTestQuestion
+from src.models.platform_stats import PlatformStats
+from src.models.question_answer import Answer, Question
+from src.models.user import UserProfile
 
 
 class Phase1LogicTests(TestCase):
@@ -54,7 +54,7 @@ class Phase1LogicTests(TestCase):
 
         # Add another user with more XP
         user2 = User.objects.create_user(username="user2", email="user2@example.com")
-        profile2 = UserProfile.objects.create(
+        UserProfile.objects.create(
             google_auth_user=user2, email="user2@example.com", experience_points=200
         )
 

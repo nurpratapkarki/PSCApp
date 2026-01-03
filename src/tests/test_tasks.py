@@ -1,6 +1,7 @@
 from django.test import TestCase
+
 from src.celery import app
-from django.conf import settings
+
 
 class ScheduledTasksTests(TestCase):
     def test_beat_schedule(self):
@@ -14,24 +15,25 @@ class ScheduledTasksTests(TestCase):
         self.assertIn("send-weekly-summary", schedule)
         self.assertIn("process-monthly-publications", schedule)
         self.assertIn("monthly-maintenance", schedule)
-        
+
         # Verify task paths are importable
         from src import tasks
+
         self.assertTrue(hasattr(tasks, "update_platform_stats"))
         self.assertTrue(hasattr(tasks, "check_streak_notifications"))
         self.assertTrue(hasattr(tasks, "monthly_maintenance"))
 
     def test_monthly_maintenance_logic(self):
         """Test monthly maintenance task logic"""
-        from src.tasks import monthly_maintenance
         from src.models.platform_stats import PlatformStats
-        
+        from src.tasks import monthly_maintenance
+
         # Setup
         PlatformStats.objects.create(id=1, total_contributions_this_month=10)
-        
+
         # Execute
         monthly_maintenance()
-        
+
         # Verify
         stats = PlatformStats.objects.first()
         self.assertEqual(stats.total_contributions_this_month, 0)

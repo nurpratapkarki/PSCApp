@@ -3,11 +3,11 @@ generated with djinit
 Common settings shared between development and production environment
 """
 
-import os
 from datetime import timedelta
 from pathlib import Path
 
 import environ
+from celery.schedules import crontab
 
 env = environ.Env()
 environ.Env.read_env()
@@ -189,8 +189,6 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
-# Celery Beat Schedule
-from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     "update-platform-stats-hourly": {

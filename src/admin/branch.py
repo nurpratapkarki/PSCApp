@@ -1,5 +1,6 @@
 from django.contrib import admin
-from src.models.branch import Branch, SubBranch, Category
+
+from src.models.branch import Branch, Category, SubBranch
 
 
 class SubBranchInline(admin.TabularInline):

@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from src.models.app_settings import AppSettings
 
 

@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+
 from src.models import UserStatistics
 
 
@@ -12,7 +13,6 @@ class Command(BaseCommand):
 
         self.stdout.write("Updating user streaks...")
 
-        all_stats = UserStatistics.objects.all()
         # logic: if last_activity_date < yesterday, streak = 0?
         # The model method `update_streak` is usually called when user does an action.
         # But if they DON'T do an action, we need a cron to reset them?
@@ -23,8 +23,9 @@ class Command(BaseCommand):
         # Iterating all users is expensive.
         # Better: Filter users who have streak > 0 AND last_activity_date < yesterday
 
-        from django.utils import timezone
         from datetime import timedelta
+
+        from django.utils import timezone
 
         today = timezone.now().date()
         yesterday = today - timedelta(days=1)

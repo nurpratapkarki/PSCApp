@@ -1,5 +1,6 @@
 from django.contrib import admin
-from src.models.user_stats import UserStatistics, UserProgress, StudyCollection
+
+from src.models.user_stats import StudyCollection, UserProgress, UserStatistics
 
 
 @admin.register(UserStatistics)

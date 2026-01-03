@@ -1,6 +1,7 @@
 """generated with djinit"""
 
 import os
+
 import environ
 from django.core.asgi import get_asgi_application
 
@@ -13,9 +14,10 @@ os.environ.setdefault(
 )
 django_asgi_app = get_asgi_application()
 
-from channels.auth import AuthMiddlewareStack
-from channels.routing import ProtocolTypeRouter, URLRouter
-import src.routing
+from channels.auth import AuthMiddlewareStack  # noqa: E402
+from channels.routing import ProtocolTypeRouter, URLRouter  # noqa: E402
+
+import src.routing  # noqa: E402
 
 application = ProtocolTypeRouter(
     {

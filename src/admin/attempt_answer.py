@@ -1,5 +1,6 @@
 from django.contrib import admin
-from src.models.attempt_answer import UserAttempt, UserAnswer
+
+from src.models.attempt_answer import UserAnswer, UserAttempt
 
 
 class UserAnswerInline(admin.TabularInline):

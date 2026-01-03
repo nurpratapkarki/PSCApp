@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from src.models import UserStatistics, UserProfile
+
+from src.models import UserStatistics
 
 
 class Command(BaseCommand):

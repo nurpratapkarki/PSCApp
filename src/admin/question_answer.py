@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from src.models.question_answer import Question, Answer, QuestionReport
+
+from src.models.question_answer import Answer, Question, QuestionReport
 
 
 class AnswerInline(admin.TabularInline):

@@ -1,7 +1,9 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
-from datetime import timedelta
+
 from src.models.branch import Category
 from src.models.user import User as CustomUser
 

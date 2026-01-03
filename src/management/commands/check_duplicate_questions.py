@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
-from src.models import Question
 from django.db.models import Q
+
+from src.models import Question
 
 
 class Command(BaseCommand):

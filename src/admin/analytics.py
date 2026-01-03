@@ -1,5 +1,6 @@
 from django.contrib import admin
-from src.models.analytics import Contribution, LeaderBoard, DailyActivity
+
+from src.models.analytics import Contribution, DailyActivity, LeaderBoard
 
 
 @admin.register(Contribution)

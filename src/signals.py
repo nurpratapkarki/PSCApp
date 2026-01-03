@@ -1,18 +1,15 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils import timezone
+
 from src.models import (
-    UserAnswer,
-    Question,
     Contribution,
-    UserProfile,
-    Notification,
-    UserAttempt,
     LeaderBoard,
-    UserStatistics,
-    PlatformStats,
-    Category,
+    Notification,
+    Question,
+    UserAnswer,
+    UserAttempt,
     UserProgress,
+    UserStatistics,
 )
 
 

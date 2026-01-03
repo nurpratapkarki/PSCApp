@@ -1,13 +1,13 @@
-from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
-from django.utils import timezone
 from datetime import timedelta
 
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 from django.db.models import Count
-from src.models.question_answer import Question
-from src.models.user import User as CustomUser
+from django.utils import timezone
+
 from src.models.attempt_answer import UserAnswer, UserAttempt
 from src.models.question_answer import Question
+from src.models.user import User as CustomUser
 
 
 class Contribution(models.Model):
@@ -266,7 +266,8 @@ class LeaderBoard(models.Model):
 
     @staticmethod
     def recalculate_rankings(time_period, branch=None, sub_branch=None):
-        from django.db.models import Sum, Count, Avg
+        from django.db.models import Avg, Count, Sum
+
         from src.models.attempt_answer import UserAttempt
 
         # 1. Determine Date Range

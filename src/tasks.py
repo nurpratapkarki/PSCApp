@@ -1,6 +1,7 @@
-from celery import shared_task
 from django.core.management import call_command
-from src.models import PlatformStats, DailyActivity, LeaderBoard, UserStatistics, Branch
+
+from celery import shared_task
+from src.models import Branch, DailyActivity, LeaderBoard, PlatformStats
 
 
 @shared_task
