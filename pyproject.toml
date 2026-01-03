@@ -40,3 +40,8 @@ ignore = [
 
 [tool.ruff.lint.isort]
 known-first-party = ["."]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.10",
+]
