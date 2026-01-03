@@ -23,10 +23,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 THIRD_PARTY_APPS = [
     "channels",
     "rest_framework",
+    "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "drf_spectacular",
+    "django_filters",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
+    "allauth.socialaccount.providers.google",
 ]
 
 USER_DEFINED_APPS = [
@@ -45,6 +53,9 @@ BUILT_IN_APPS = [
 INSTALLED_APPS = BUILT_IN_APPS + THIRD_PARTY_APPS + USER_DEFINED_APPS
 INSTALLED_APPS.insert(0, "jazzmin")
 
+# django.contrib.sites
+SITE_ID = 1
+
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
@@ -55,6 +66,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = "src.urls"
@@ -103,15 +115,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Kathmandu"
 USE_I18N = True
 USE_TZ = True
 
 # Static files and media files
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
@@ -120,14 +132,15 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # REST Framework Settings
 REST_FRAMEWORK = {
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-    ],
+    # "DEFAULT_RENDERER_CLASSES": [
+    # "rest_framework.renderers.JSONRenderer",
+    # ],
     "DEFAULT_PARSER_CLASSES": [
         "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -223,4 +236,41 @@ CELERY_BEAT_SCHEDULE = {
         "task": "src.tasks.monthly_maintenance",
         "schedule": crontab(day_of_month=1, hour=4, minute=0),
     },
+}
+
+
+## Django-AllAuth
+ACCOUNT_LOGIN_METHODS = {"email"}  # Use Email / Password authentication
+ACCOUNT_EMAIL_VERIFICATION = "none"
+ACCOUNT_SIGNUP_FIELDS = ["email"]  # Passwords are handled automatically
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+
+# dj-rest-auth settings
+REST_AUTH = {
+    "USE_JWT": True,
+    "JWT_AUTH_COOKIE": "psc-auth",
+    "JWT_AUTH_REFRESH_COOKIE": "psc-refresh-token",
+    "USER_DETAILS_SERIALIZER": "src.api.user.serializers.UserProfileSerializer",  # Explicitly point to our user serializer if needed, or keep default
+}
+# Authenticate if local account with this email address already exists
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+# Connect local account and social account if local account with that email address already exists
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+# Social Account Providers
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": env("GOOGLE_CLIENT_ID", default=""),
+            "secret": env("GOOGLE_SECRET", default=""),
+            "key": "",
+        },
+        "SCOPE": [
+            "profile",
+            "email",
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    }
 }

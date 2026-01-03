@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -8,9 +9,30 @@ from src.models import (
     Question,
     UserAnswer,
     UserAttempt,
+    UserProfile,
     UserProgress,
     UserStatistics,
 )
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """
+    Create UserProfile automatically for every new User (including Google OAuth users)
+    """
+    if created:
+        UserProfile.objects.get_or_create(
+            google_auth_user=instance,
+            defaults={
+                "email": instance.email,
+                "full_name": f"{instance.first_name} {instance.last_name}".strip()
+                or instance.username,
+            },
+        )
+    else:
+        # Sync simple fields if needed?
+        # instance.profile.save()
+        pass
 
 
 @receiver(post_save, sender=UserAnswer)
