@@ -1,5 +1,11 @@
-"""generated with djinit"""
-
-from django.contrib import admin
-
-# Register your models here.
+from .app_settings import *
+from .branch import *
+from .user import *
+from .notification import *
+from .question_answer import *
+from .mocktest import *
+from .attempt_answer import *
+from .platform_stats import *
+from .analytics import *
+from .user_stats import *
+from .time_config import *
