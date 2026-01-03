@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
@@ -9,7 +11,10 @@ from src.models.question_answer import Question
 
 class QuestionApiTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="user", password="password")
+        self.email = f"user_{uuid4().hex[:8]}@example.com"
+        self.user = User.objects.create_user(
+            username="user", password="password", email=self.email
+        )
         self.client = APIClient()
         self.category = Category.objects.create(
             name_en="GK", scope_type="UNIVERSAL", slug="gk"
@@ -85,7 +90,10 @@ class QuestionApiTests(APITestCase):
         self.assertIn(draft_q.id, ids)  # User should see their draft
 
         # Test as another user
-        other_user = User.objects.create_user(username="other", password="password")
+        other_email = f"other_{uuid4().hex[:8]}@example.com"
+        other_user = User.objects.create_user(
+            username="other", password="password", email=other_email
+        )
         self.client.force_authenticate(user=other_user)
         response = self.client.get(self.list_url)
 
@@ -108,7 +116,10 @@ class QuestionApiTests(APITestCase):
         self.assertTrue(q.consent_given)
 
     def test_consent_permission(self):
-        other_user = User.objects.create_user(username="other", password="password")
+        other_email = f"other2_{uuid4().hex[:8]}@example.com"
+        other_user = User.objects.create_user(
+            username="other", password="password", email=other_email
+        )
         q = Question.objects.create(
             question_text_en="Other Q", category=self.category, created_by=other_user
         )

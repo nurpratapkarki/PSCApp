@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
@@ -6,9 +8,13 @@ from rest_framework.test import APIClient, APITestCase
 
 class AnalyticsApiTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="user", password="password")
+        self.email = f"user_{uuid4().hex[:8]}@example.com"
+        self.user = User.objects.create_user(
+            username="user", password="password", email=self.email
+        )
+        self.admin_email = f"admin_{uuid4().hex[:8]}@example.com"
         self.admin = User.objects.create_superuser(
-            username="admin", password="password"
+            username="admin", password="password", email=self.admin_email
         )
         self.client = APIClient()
 

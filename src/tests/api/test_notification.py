@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
@@ -8,7 +10,10 @@ from src.models.notification import Notification
 
 class NotificationApiTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="user", password="password")
+        self.email = f"user_{uuid4().hex[:8]}@example.com"
+        self.user = User.objects.create_user(
+            username="user", password="password", email=self.email
+        )
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
         self.notif1 = Notification.objects.create(

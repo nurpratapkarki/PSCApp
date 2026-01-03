@@ -1,3 +1,4 @@
+from uuid import uuid4
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
@@ -71,7 +72,8 @@ class GoogleLoginTests(APITestCase):
 
         with override_settings(DEBUG=True, SECURE_SSL_REDIRECT=False):
             url = reverse("dev_login")
-            payload = {"email": "devuser@example.com"}
+            email = f"devuser_{uuid4().hex[:8]}@example.com"
+            payload = {"email": email}
             response = self.client.post(url, payload)
 
             if response.status_code == 302:
@@ -80,7 +82,7 @@ class GoogleLoginTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertIn("access", response.data)
             self.assertIn("user", response.data)
-            self.assertEqual(response.data["user"]["email"], "devuser@example.com")
+            self.assertEqual(response.data["user"]["email"], email)
 
             # Verify Profile Created
             user_id = response.data["user"]["pk"]
@@ -113,9 +115,9 @@ class GoogleLoginTests(APITestCase):
         """
         Directly test that creating a user (like allauth does) triggers our signal.
         """
-        email = "signaltest@example.com"
+        email = f"signaltest_{uuid4().hex[:8]}@example.com"
         user = User.objects.create(
-            username="unique_user_123", email=email, first_name="Test"
+            username=f"unique_user_{uuid4().hex[:8]}", email=email, first_name="Test"
         )
 
         # Check profile exists

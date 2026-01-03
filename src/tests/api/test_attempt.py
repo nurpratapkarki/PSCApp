@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
@@ -6,13 +8,16 @@ from rest_framework.test import APIClient, APITestCase
 from src.models.branch import Branch, Category
 from src.models.mocktest import MockTest, MockTestQuestion
 from src.models.question_answer import Answer, Question
-from src.models.user import UserProfile
 
 
 class AttemptApiTests(APITestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="testuser", password="password")
-        UserProfile.objects.create(google_auth_user=self.user, email="test@test.com")
+        self.email = f"test_{uuid4().hex[:8]}@example.com"
+        self.user = User.objects.create_user(
+            username="testuser", password="password", email=self.email
+        )
+        # Profile is created by signal
+        self.profile = self.user.profile
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 

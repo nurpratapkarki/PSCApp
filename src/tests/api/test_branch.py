@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
@@ -65,10 +67,13 @@ class BranchApiTests(APITestCase):
 
     def test_categories_for_user(self):
         # Create a user with Engineering branch
-        user = User.objects.create_user(username="eng_user", password="password")
-        UserProfile.objects.create(
-            google_auth_user=user, email="eng@test.com", target_branch=self.branch
+        email = f"eng_{uuid4().hex[:8]}@test.com"
+        user = User.objects.create_user(
+            username="eng_user", password="password", email=email
         )
+        # Profile created by signal
+        user.profile.target_branch = self.branch
+        user.profile.save()
 
         self.client.force_authenticate(user=user)
         url = reverse("category-for-user")
@@ -104,7 +109,10 @@ class BranchApiTests(APITestCase):
         )
 
         # Authenticated user try
-        user = User.objects.create_user(username="user", password="password")
+        email = f"user_{uuid4().hex[:8]}@example.com"
+        user = User.objects.create_user(
+            username="user", password="password", email=email
+        )
         self.client.force_authenticate(user=user)
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
