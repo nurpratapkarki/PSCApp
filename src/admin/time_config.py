@@ -16,3 +16,30 @@ class TimeConfigurationAdmin(admin.ModelAdmin):
     )
     list_filter = ("branch", "is_active")
     search_fields = ("description", "branch__name_en")
+    autocomplete_fields = ["branch", "sub_branch", "category"]
+
+    fieldsets = (
+        (
+            "Targeting",
+            {
+                "fields": ("branch", "sub_branch", "category"),
+            },
+        ),
+        (
+            "Configuration",
+            {
+                "fields": (
+                    "standard_duration_minutes",
+                    "questions_count",
+                    "marks_per_question",
+                    "negative_marks_per_question",
+                ),
+            },
+        ),
+        (
+            "Status",
+            {
+                "fields": ("is_active", "description"),
+            },
+        ),
+    )
