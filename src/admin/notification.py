@@ -1,9 +1,10 @@
 from django.contrib import admin
 
+from src.admin.custom_admin import CustomAdmin
 from src.models.notification import Notification
 
 
-@admin.register(Notification)
+@admin.register(Notification, site=CustomAdmin)
 class NotificationAdmin(admin.ModelAdmin):
     list_display = (
         "user",

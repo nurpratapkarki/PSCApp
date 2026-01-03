@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from src.admin.custom_admin import CustomAdmin
 from src.models.attempt_answer import UserAnswer, UserAttempt
 
 
@@ -16,7 +17,7 @@ class UserAnswerInline(admin.TabularInline):
     max_num = 0
 
 
-@admin.register(UserAttempt)
+@admin.register(UserAttempt, site=CustomAdmin)
 class UserAttemptAdmin(admin.ModelAdmin):
     list_display = (
         "user",

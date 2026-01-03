@@ -1,9 +1,10 @@
 from django.contrib import admin
 
+from src.admin.custom_admin import CustomAdmin
 from src.models.time_config import TimeConfiguration
 
 
-@admin.register(TimeConfiguration)
+@admin.register(TimeConfiguration, site=CustomAdmin)
 class TimeConfigurationAdmin(admin.ModelAdmin):
     list_display = (
         "branch",

@@ -1,5 +1,6 @@
 from django.contrib import admin
 
+from src.admin.custom_admin import CustomAdmin
 from src.models.mocktest import MockTest, MockTestQuestion
 
 
@@ -9,7 +10,7 @@ class MockTestQuestionInline(admin.TabularInline):
     extra = 1
 
 
-@admin.register(MockTest)
+@admin.register(MockTest, site=CustomAdmin)
 class MockTestAdmin(admin.ModelAdmin):
     list_display = (
         "title_en",

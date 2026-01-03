@@ -1,9 +1,28 @@
 from django.contrib import admin
+from django.contrib.auth.models import Group, User
 
+from src.admin.custom_admin import CustomAdmin
 from src.models.user import UserProfile
 
+# Register default User and Group models with CustomAdmin
+admin.site.unregister(User)
+admin.site.unregister(Group)
 
-@admin.register(UserProfile)
+
+@admin.register(User, site=CustomAdmin)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ("username", "email", "first_name", "last_name", "is_staff")
+    search_fields = ("username", "email", "first_name", "last_name")
+    list_filter = ("is_staff", "is_superuser", "is_active")
+
+
+@admin.register(Group, site=CustomAdmin)
+class GroupAdmin(admin.ModelAdmin):
+    list_display = ("name",)
+    search_fields = ("name",)
+
+
+@admin.register(UserProfile, site=CustomAdmin)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = (
         "full_name",

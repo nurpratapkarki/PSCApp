@@ -13,8 +13,10 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
+from src.admin.custom_admin import CustomAdmin
+
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("admin/", CustomAdmin.urls),
     # JWT tokens
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

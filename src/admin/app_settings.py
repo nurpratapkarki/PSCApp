@@ -1,9 +1,10 @@
 from django.contrib import admin
 
+from src.admin.custom_admin import CustomAdmin
 from src.models.app_settings import AppSettings
 
 
-@admin.register(AppSettings)
+@admin.register(AppSettings, site=CustomAdmin)
 class AppSettingsAdmin(admin.ModelAdmin):
     list_display = ("setting_key", "is_active", "updated_at")
     list_filter = ("is_active",)
