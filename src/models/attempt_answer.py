@@ -75,17 +75,69 @@ class UserAttempt(models.Model):
         test_name = self.mock_test.title_en if self.mock_test else "Practice"
         return f"{self.user.username} - {test_name} ({self.status})"
 
-    # TODO: Add method to calculate final score and percentage
-    # def calculate_results(self):
-    #     pass
+    def calculate_results(self):
+        total_score = 0
+        score_obtained = 0
 
-    # TODO: Add method to mark as completed
-    # def complete_attempt(self):
-    #     pass
+        # Pre-fetch marks if it's a mock test
+        marks_map = {}
+        if self.mock_test:
+            for mq in self.mock_test.test_questions.all():
+                marks_map[mq.question_id] = mq.marks_allocated
+                total_score += mq.marks_allocated
 
-    # TODO: Add method to get time remaining (for timed tests)
-    # def get_time_remaining(self):
-    #     pass
+        answers = self.user_answers.all()
+        for ans in answers:
+            # Default to 1 mark if not in map (e.g. practice mode or mapping error)
+            question_score = marks_map.get(ans.question_id, 1)
+
+            if not self.mock_test:
+                # In practice mode, total score grows with questions attempted
+                total_score += question_score
+
+            if ans.is_correct:
+                score_obtained += question_score
+
+        self.score_obtained = score_obtained
+        self.total_score = total_score
+
+        if total_score > 0:
+            self.percentage = (score_obtained / total_score) * 100
+        else:
+            self.percentage = 0.0
+
+        if self.end_time and self.start_time:
+            self.total_time_taken = int(
+                (self.end_time - self.start_time).total_seconds()
+            )
+
+        self.save(
+            update_fields=[
+                "score_obtained",
+                "total_score",
+                "percentage",
+                "total_time_taken",
+            ]
+        )
+
+    def complete_attempt(self):
+        if self.status != "COMPLETED":
+            self.end_time = timezone.now()
+            self.status = "COMPLETED"
+            self.calculate_results()
+            self.save()
+
+    def get_time_remaining(self):
+        if self.status != "IN_PROGRESS":
+            return 0
+
+        if self.mock_test and self.mock_test.duration_minutes:
+            limit_seconds = self.mock_test.duration_minutes * 60
+            elapsed = (timezone.now() - self.start_time).total_seconds()
+            remaining = limit_seconds - elapsed
+            return max(0, int(remaining))
+
+        return None  # Unlimited time
 
 
 class UserAnswer(models.Model):

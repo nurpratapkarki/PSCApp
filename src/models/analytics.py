@@ -1,8 +1,13 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 
+from django.db.models import Count
 from src.models.question_answer import Question
 from src.models.user import User as CustomUser
+from src.models.attempt_answer import UserAnswer, UserAttempt
+from src.models.question_answer import Question
 
 
 class Contribution(models.Model):
@@ -59,26 +64,41 @@ class Contribution(models.Model):
     def __str__(self):
         return f"{self.user.username} - Q{self.question.id} ({self.status})"
 
-    # TODO: Add method to approve contribution
-    # def approve_contribution(self):
-    #     pass
+    def approve_contribution(self):
+        self.status = "APPROVED"
+        self.approval_date = timezone.now()
+        self.save()
 
-    # TODO: Add method to reject with reason
-    # def reject_contribution(self, reason):
-    #     pass
+    def reject_contribution(self, reason):
+        self.status = "REJECTED"
+        self.rejection_reason = reason
+        self.save()
 
-    # TODO: Add method to make public (monthly batch)
-    # def make_public(self):
-    #     pass
+    def make_public(self):
+        self.status = "MADE_PUBLIC"
+        self.public_date = timezone.now()
+        self.save()
 
-    # TODO: Add method to select for Facebook feature
-    # def feature_for_social(self):
-    #     pass
+        # Also update the actual question
+        self.question.is_public = True
+        self.question.status = "PUBLIC"
+        self.question.save(update_fields=["is_public", "status"])
 
-    # TODO: Get top contributors for a month
-    # @staticmethod
-    # def get_top_contributors(year, month, limit=10):
-    #     pass
+    def feature_for_social(self):
+        self.is_featured = True
+        self.save(update_fields=["is_featured"])
+
+    @staticmethod
+    def get_top_contributors(year, month, limit=10):
+        return (
+            CustomUser.objects.filter(
+                contributions__contribution_year=year,
+                contributions__contribution_month=month,
+                contributions__status="MADE_PUBLIC",
+            )
+            .annotate(count=Count("contributions"))
+            .order_by("-count")[:limit]
+        )
 
 
 class DailyActivity(models.Model):
@@ -118,20 +138,52 @@ class DailyActivity(models.Model):
     def __str__(self):
         return f"Activity: {self.date}"
 
-    # TODO: Add method to get activity for date range
-    # @staticmethod
-    # def get_activity_range(start_date, end_date):
-    #     pass
+    @staticmethod
+    def get_activity_range(start_date, end_date):
+        return DailyActivity.objects.filter(
+            date__range=[start_date, end_date]
+        ).order_by("date")
 
-    # TODO: Add method to get weekly/monthly trends
-    # @staticmethod
-    # def get_trend_data(period='week'):
-    #     pass
+    @staticmethod
+    def get_trend_data(last_n_days=7):
+        # Simplified to return last N days instead of aggregation logic
 
-    # TODO: Add scheduled task to create/update daily record
-    # @staticmethod
-    # def record_today_activity():
-    #     pass
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=last_n_days)
+        return DailyActivity.get_activity_range(start_date, end_date)
+
+    @staticmethod
+    def record_today_activity():
+        today = timezone.now().date()
+        date_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+        # Create or update record for today
+        activity, created = DailyActivity.objects.get_or_create(date=today)
+
+        # Update counts
+        activity.new_users = CustomUser.objects.filter(
+            date_joined__gte=date_start
+        ).count()
+        activity.questions_added = Question.objects.filter(
+            created_at__gte=date_start
+        ).count()
+        activity.questions_approved = Question.objects.filter(
+            updated_at__gte=date_start,
+            status="PUBLIC",  # Approximate approval time
+        ).count()
+        activity.mock_tests_taken = UserAttempt.objects.filter(
+            start_time__gte=date_start
+        ).count()
+        activity.total_answers_submitted = UserAnswer.objects.filter(
+            created_at__gte=date_start
+        ).count()
+
+        # Active users approximation (users who logged in today)
+        activity.active_users = CustomUser.objects.filter(
+            last_login__gte=date_start
+        ).count()
+
+        activity.save()
 
 
 class LeaderBoard(models.Model):
@@ -162,6 +214,9 @@ class LeaderBoard(models.Model):
         help_text="Leaderboard can be branch-wide or sub-branch specific",
     )
     rank = models.IntegerField(help_text="Current ranking position")
+    previous_rank = models.IntegerField(
+        null=True, blank=True, help_text="Rank from previous calculation"
+    )
     total_score = models.DecimalField(
         max_digits=10,
         decimal_places=2,
@@ -189,16 +244,122 @@ class LeaderBoard(models.Model):
     def __str__(self):
         return f"#{self.rank} - {self.user.username} ({self.get_time_period_display()})"
 
-    # TODO: Add method to recalculate rankings for a time period
-    # @staticmethod
-    # def recalculate_rankings(time_period, branch=None, sub_branch=None):
-    #     pass
+    @classmethod
+    def update_score(cls, user, branch, score_delta):
+        """
+        Increment incrementally update scores for relevant leaderboards
+        """
+        item, _ = cls.objects.get_or_create(
+            user=user,
+            branch=branch,
+            time_period="ALL_TIME",
+            defaults={
+                "rank": 0,
+                "total_score": 0,
+                "tests_completed": 0,
+                "accuracy_percentage": 0,
+            },
+        )
+        item.total_score += score_delta
+        item.tests_completed += 1
+        item.save(update_fields=["total_score", "tests_completed"])
 
-    # TODO: Add method to get user's rank change from previous period
-    # def get_rank_change(self):
-    #     pass
+    @staticmethod
+    def recalculate_rankings(time_period, branch=None, sub_branch=None):
+        from django.db.models import Sum, Count, Avg
+        from src.models.attempt_answer import UserAttempt
 
-    # TODO: Add method to get top N users
-    # @staticmethod
-    # def get_top_users(time_period, branch, limit=10):
-    #     pass
+        # 1. Determine Date Range
+        end_date = timezone.now()
+        start_date = None
+
+        if time_period == "WEEKLY":
+            start_date = end_date - timedelta(days=7)
+        elif time_period == "MONTHLY":
+            start_date = end_date - timedelta(days=30)
+        # ALL_TIME implies no start_date (None)
+
+        # 2. Fetch current rankings to cache previous rank
+        params = {"time_period": time_period}
+        if branch:
+            params["branch"] = branch
+        if sub_branch:
+            params["sub_branch"] = sub_branch
+
+        old_entries = LeaderBoard.objects.filter(**params)
+        previous_ranks = {entry.user_id: entry.rank for entry in old_entries}
+
+        # Clear old entries for this specific period/context
+        old_entries.delete()
+
+        # 3. Aggregation
+        # Filter attempts
+        attempts = UserAttempt.objects.filter(status="COMPLETED")
+        if start_date:
+            attempts = attempts.filter(start_time__gte=start_date)
+
+        # Filter by branch via MockTest relation
+        # Note: Attempts filter by MockTest which is related to Branch
+        if branch:
+            attempts = attempts.filter(mock_test__branch=branch)
+        if sub_branch:
+            attempts = attempts.filter(mock_test__sub_branch=sub_branch)
+
+        # Group by user and annotate
+        user_scores = (
+            attempts.values("user")
+            .annotate(
+                total_score=Sum("score_obtained"),
+                tests_completed=Count("id"),
+                avg_accuracy=Avg("percentage"),
+            )
+            .order_by("-total_score", "-avg_accuracy")
+        )
+
+        # 4. Bulk Create
+        new_entries = []
+        current_rank = 1
+
+        # We need a branch instance for the foreign key.
+        # If branch is None (e.g. Universal leaderboard not yet supported by schema fully, checking logic),
+        # schema says branch is mandatory. So we fallback or raise error.
+        # Assuming recalculate is called WITH a branch context as per schema constraint.
+        if not branch:
+            # If branch is None, we can't create LeaderBoard entries easily due to NOT NULL constraints
+            # unless we pick a default or loop through all branches.
+            # Ideally this method is called per branch.
+            return
+
+        for data in user_scores:
+            user_id = data["user"]
+            prev = previous_ranks.get(user_id)
+
+            entry = LeaderBoard(
+                user_id=user_id,
+                time_period=time_period,
+                branch=branch,
+                sub_branch=sub_branch,
+                rank=current_rank,
+                previous_rank=prev,
+                total_score=data["total_score"] or 0,
+                tests_completed=data["tests_completed"] or 0,
+                accuracy_percentage=data["avg_accuracy"] or 0,
+            )
+            new_entries.append(entry)
+            current_rank += 1
+
+        LeaderBoard.objects.bulk_create(new_entries)
+
+    def get_rank_change(self):
+        if self.previous_rank is None:
+            return 0
+        # Positive change implies moving UP the rank (e.g. 5 -> 2 is +3)
+        # Negative change implies moving DOWN (e.g. 1 -> 4 is -3)
+        return self.previous_rank - self.rank
+
+    @staticmethod
+    def get_top_users(time_period, branch, limit=10):
+        qs = LeaderBoard.objects.filter(time_period=time_period)
+        if branch:
+            qs = qs.filter(branch=branch)
+        return qs.order_by("rank")[:limit]

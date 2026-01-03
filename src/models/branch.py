@@ -1,3 +1,5 @@
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import slugify
 
@@ -40,21 +42,14 @@ class Branch(models.Model):
             self.slug = slugify(self.name_en)
         super().save(*args, **kwargs)
 
-    # TODO: Add method to get all active sub-branches
-    # def get_sub_branches(self):
-    #     pass
+    def get_active_sub_branches(self):
+        return self.sub_branches.filter(is_active=True)
 
-    # TODO: Add method to get total questions for this branch
-    # def get_total_questions(self):
-    #     pass
+    def get_total_questions(self):
+        return Question.objects.filter(category__target_branch=self).count()
 
-    # TODO: Add method to get active users targeting this branch
-    # def get_active_users_count(self):
-    #     pass
-
-
-from django.contrib.auth.models import User
-from django.db import models
+    def get_active_users_count(self):
+        return self.target_users.filter(is_active=True).count()
 
 
 class Category(models.Model):
@@ -98,7 +93,7 @@ class Category(models.Model):
         help_text="Required if scope is BRANCH or SUBBRANCH",
     )
     target_sub_branch = models.ForeignKey(
-        SubBranch,
+        "SubBranch",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -153,8 +148,6 @@ class Category(models.Model):
         """
         Validation logic for scope-based FK requirements
         """
-        from django.core.exceptions import ValidationError
-
         if self.scope_type == "UNIVERSAL":
             if self.target_branch or self.target_sub_branch:
                 raise ValidationError(
@@ -175,18 +168,38 @@ class Category(models.Model):
                     "Sub-branch categories must have both target branch and sub-branch"
                 )
 
-    # TODO: Add method to get all questions in this category
-    # def get_questions(self, include_private=False):
-    #     pass
+    def get_questions(self, include_private=False):
+        qs = self.questions.all()
+        if not include_private:
+            qs = qs.filter(status="PUBLIC")
+        return qs
 
-    # TODO: Add method to check if user can access this category
-    # def user_can_access(self, user):
-    #     pass
+    def user_can_access(self, user):
+        if self.is_public:
+            return True
+        if user.is_authenticated and (self.created_by == user or user.is_superuser):
+            return True
+        return False
 
-    # TODO: Add method to get applicable categories for a user's target
-    # @staticmethod
-    # def get_categories_for_user(user):
-    #     pass
+    @staticmethod
+    def get_categories_for_user(user):
+        from django.db.models import Q
+
+        if not user.is_authenticated or not hasattr(user, "profile"):
+            return Category.objects.filter(scope_type="UNIVERSAL", is_active=True)
+
+        profile = user.profile
+        query = Q(scope_type="UNIVERSAL")
+
+        if profile.target_branch:
+            query |= Q(scope_type="BRANCH") & Q(target_branch=profile.target_branch)
+
+        if profile.target_sub_branch:
+            query |= Q(scope_type="SUBBRANCH") & Q(  # pyright: ignore[reportOperatorIssue]
+                target_sub_branch=profile.target_sub_branch
+            )
+
+        return Category.objects.filter(query, is_active=True)
 
 
 class SubBranch(models.Model):
@@ -224,6 +237,5 @@ class SubBranch(models.Model):
             self.slug = slugify(self.name_en)
         super().save(*args, **kwargs)
 
-    # TODO: Add method to get total questions for this sub-branch
-    # def get_total_questions(self):
-    #     pass
+    def get_total_questions(self):
+        return Question.objects.filter(category__target_sub_branch=self).count()

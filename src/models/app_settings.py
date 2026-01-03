@@ -28,20 +28,35 @@ class AppSettings(models.Model):
     def __str__(self):
         return f"{self.setting_key}: {self.setting_value[:50]}"
 
-    # TODO: Add method to get setting value with default
-    # @staticmethod
-    # def get_setting(key, default=None):
-    #     pass
+    @staticmethod
+    def get_setting(key, default=None):
+        try:
+            setting = AppSettings.objects.get(setting_key=key, is_active=True)
+            return setting.setting_value
+        except AppSettings.DoesNotExist:
+            return default
 
-    # TODO: Add method to set setting value
-    # @staticmethod
-    # def set_setting(key, value, description=None):
-    #     pass
+    @staticmethod
+    def set_setting(key, value, description=None):
+        obj, created = AppSettings.objects.update_or_create(
+            setting_key=key, defaults={"setting_value": str(value), "is_active": True}
+        )
+        if description:
+            obj.description = description
+            obj.save(update_fields=["description"])
+        return obj
 
-    # TODO: Add method to get JSON setting as dict
-    # @staticmethod
-    # def get_json_setting(key):
-    #     pass
+    @staticmethod
+    def get_json_setting(key, default=None):
+        import json
+
+        val = AppSettings.get_setting(key)
+        if val is None:
+            return default or {}
+        try:
+            return json.loads(val)
+        except json.JSONDecodeError:
+            return default or {}
 
 
 # ============================================================================

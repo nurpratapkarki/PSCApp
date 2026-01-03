@@ -69,16 +69,68 @@ class Notification(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.title_en}"
 
-    # TODO: Add method to mark as read
-    # def mark_as_read(self):
-    #     pass
+    def mark_as_read(self):
+        if not self.is_read:
+            self.is_read = True
+            self.save(update_fields=["is_read"])
 
-    # TODO: Add method to create notification for multiple users
-    # @staticmethod
-    # def create_bulk_notifications(users, notification_type, title, message):
-    #     pass
+    @staticmethod
+    def create_bulk_notifications(
+        users,
+        notification_type,
+        title_en,
+        title_np,
+        message_en,
+        message_np,
+        related_question=None,
+        related_mock_test=None,
+    ):
+        notifications = [
+            Notification(
+                user=user,
+                notification_type=notification_type,
+                title_en=title_en,
+                title_np=title_np,
+                message_en=message_en,
+                message_np=message_np,
+                related_question=related_question,
+                related_mock_test=related_mock_test,
+            )
+            for user in users
+        ]
+        Notification.objects.bulk_create(notifications)
 
-    # TODO: Add method to get unread count for user
-    # @staticmethod
-    # def get_unread_count(user):
-    #     pass
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+        if is_new:
+            self.send_realtime()
+
+    def send_realtime(self):
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+
+        channel_layer = get_channel_layer()
+        group_name = f"user_{self.user.id}"
+
+        data = {
+            "id": self.id,
+            "type": self.notification_type,
+            "title": self.title_en,  # Sending English title as default
+            "message": self.message_en,
+            "action_url": self.action_url,
+            "created_at": self.created_at.isoformat(),
+            "is_read": self.is_read,
+        }
+
+        try:
+            async_to_sync(channel_layer.group_send)(
+                group_name, {"type": "send_notification", "data": data}
+            )
+        except Exception as e:
+            # Fallback or log error, don't crash main thread
+            print(f"Failed to send realtime notification: {e}")
+
+    @staticmethod
+    def get_unread_count(user):
+        return Notification.objects.filter(user=user, is_read=False).count()

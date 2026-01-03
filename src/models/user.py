@@ -69,14 +69,23 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"{self.full_name} ({self.email})"
 
-    # TODO: Add method to calculate level from experience_points
-    # def calculate_level(self):
-    #     pass
+    def calculate_level(self):
+        # Simple progression: 100 XP per level
+        return 1 + (self.experience_points // 100)
 
-    # TODO: Add method to award experience points
-    # def award_xp(self, points, reason):
-    #     pass
+    def award_experience_points(self, points, reason=None):
+        self.experience_points += points
+        self.level = self.calculate_level()
+        self.save(update_fields=["experience_points", "level"])
 
-    # TODO: Add method to get user's rank in leaderboard
-    # def get_current_rank(self, time_period='ALL_TIME'):
-    #     pass
+    def get_current_rank(self, time_period="ALL_TIME"):
+        # Currently only supporting ALL_TIME based on total experience_points
+        # For specific time periods, we would need to aggregate UserStats/DailyActivity
+        if time_period == "ALL_TIME":
+            return (
+                UserProfile.objects.filter(
+                    experience_points__gt=self.experience_points, is_active=True
+                ).count()
+                + 1
+            )
+        return None

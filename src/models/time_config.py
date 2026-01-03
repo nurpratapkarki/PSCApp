@@ -61,7 +61,31 @@ class TimeConfiguration(models.Model):
             parts.append(self.category.name_en)
         return f"{' > '.join(parts)} - {self.standard_duration_minutes}min"
 
-    # TODO: Add method to get applicable time config for a test
-    # @staticmethod
-    # def get_config_for_test(branch, sub_branch=None, category=None):
-    #     pass
+    @staticmethod
+    def get_config_for_test(branch, sub_branch=None, category=None):
+        # Specificity order:
+        # 1. Branch + SubBranch + Category
+        # 2. Branch + SubBranch
+        # 3. Branch + Category
+        # 4. Branch only
+
+        configs = TimeConfiguration.objects.filter(branch=branch, is_active=True)
+
+        # Try finding most specific match
+        if sub_branch and category:
+            match = configs.filter(sub_branch=sub_branch, category=category).first()
+            if match:
+                return match
+
+        if sub_branch:
+            match = configs.filter(sub_branch=sub_branch, category__isnull=True).first()
+            if match:
+                return match
+
+        if category:
+            match = configs.filter(category=category, sub_branch__isnull=True).first()
+            if match:
+                return match
+
+        # Fallback to general branch config
+        return configs.filter(sub_branch__isnull=True, category__isnull=True).first()

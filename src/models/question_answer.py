@@ -99,21 +99,33 @@ class Question(models.Model):
     def __str__(self):
         return f"Q{self.id}: {self.question_text_en[:50]}..."
 
-    # TODO: Add method to calculate accuracy rate
-    # def get_accuracy_rate(self):
-    #     pass
+    def get_accuracy_rate(self):
+        if self.times_attempted == 0:
+            return 0.0
+        return (self.times_correct / self.times_attempted) * 100
 
-    # TODO: Add method to get all user attempts for this question
-    # def get_attempt_history(self, user=None):
-    #     pass
+    def get_attempt_history(self, user=None):
+        qs = self.user_responses.select_related("user_attempt")
+        if user:
+            qs = qs.filter(user_attempt__user=user)
+        return qs
 
-    # TODO: Add method to check if question has duplicate in public pool
-    # def check_duplicate(self):
-    #     pass
+    def check_duplicate(self):
+        from django.db.models import Q
 
-    # TODO: Add method to schedule for monthly publication
-    # def schedule_publication(self, target_date):
-    #     pass
+        return (
+            Question.objects.filter(
+                Q(question_text_en__iexact=self.question_text_en)
+                | Q(question_text_np__iexact=self.question_text_np)
+            )
+            .exclude(id=self.id)
+            .exists()
+        )
+
+    def schedule_publication(self, target_date):
+        self.scheduled_public_date = target_date
+        self.status = "PENDING_REVIEW"  # Ensure it's not public yet
+        self.save(update_fields=["scheduled_public_date", "status"])
 
 
 class Answer(models.Model):
@@ -146,9 +158,20 @@ class Answer(models.Model):
         correct_mark = "✓" if self.is_correct else "✗"
         return f"{correct_mark} {self.answer_text_en[:30]}..."
 
-    # TODO: Add validation to ensure only one correct answer per question
-    # def clean(self):
-    #     pass
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.is_correct and self.question_id:
+            # Check if another answer for this question is already correct
+            # Exclude self to allow updating the current correct answer
+            others = Answer.objects.filter(question=self.question, is_correct=True)
+            if self.id:
+                others = others.exclude(id=self.id)
+
+            if others.exists():
+                raise ValidationError(
+                    "There can only be one correct answer per question."
+                )
 
 
 class QuestionReport(models.Model):
@@ -211,15 +234,30 @@ class QuestionReport(models.Model):
     def __str__(self):
         return f"Report #{self.id} - Q{self.question.id} ({self.get_reason_display()})"
 
-    # TODO: Add method to mark as resolved
-    # def resolve_report(self, admin_user, notes):
-    #     pass
+    def resolve_report(self, admin_user, notes):
+        self.status = "RESOLVED"
+        self.reviewed_by = admin_user
+        self.admin_notes = notes
+        self.resolved_at = models.functions.Now()
+        self.save()
 
-    # TODO: Add method to notify question creator
-    # def notify_creator(self):
-    #     pass
+    def notify_creator(self):
+        from src.models.notification import Notification
 
-    # TODO: Add method to check if question has multiple reports
-    # @staticmethod
-    # def get_high_priority_questions():
-    #     pass
+        creator = self.question.created_by
+        if creator:
+            Notification.objects.create(
+                user=creator,
+                notification_type="REPORT_RESOLVED",
+                title_en="Question Report Resolved",
+                title_np="प्रश्न रिपोर्ट समाधान गरियो",
+                message_en=f"A report on your question Q{self.question.id} has been reviewed.",
+                message_np=f"तपाईंको प्रश्न Q{self.question.id} मा गरिएको रिपोर्ट समीक्षा गरिएको छ।",
+                related_question=self.question,
+            )
+
+    @staticmethod
+    def get_high_priority_questions():
+        # Using the accumulated reported_count on Question model
+        # Assuming reported_count is kept in sync via signals
+        return Question.objects.filter(reported_count__gte=3, status="PUBLIC")

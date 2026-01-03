@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.db import models
-
+from django.utils import timezone
+from datetime import timedelta
 from src.models.branch import Category
 from src.models.user import User as CustomUser
 
@@ -53,13 +54,46 @@ class UserProgress(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.category.name_en} ({self.accuracy_percentage}%)"
 
-    # TODO: Add method to update progress after each attempt
-    # def update_progress(self, is_correct, time_taken):
-    #     pass
+    def update_progress(self, is_correct, time_taken):
+        # Update counts
+        self.questions_attempted += 1
+        if is_correct:
+            self.correct_answers += 1
 
-    # TODO: Add method to identify weak topics
-    # def analyze_weak_topics(self):
-    #     pass
+        # Recalculate accuracy
+        if self.questions_attempted > 0:
+            self.accuracy_percentage = (
+                self.correct_answers / self.questions_attempted
+            ) * 100
+
+        # Update average time (cumulative moving average)
+        if self.average_time_seconds is None:
+            self.average_time_seconds = time_taken
+        else:
+            # New Avg = ((Old Avg * (N-1)) + New Val) / N
+            total_seconds_before = self.average_time_seconds * (
+                self.questions_attempted - 1
+            )
+            self.average_time_seconds = int(
+                (total_seconds_before + time_taken) / self.questions_attempted
+            )
+
+        self.last_attempted_date = timezone.now()
+        self.save()
+
+    def analyze_weak_topics(self):
+        # Logic: If accuracy is low, flag this category (or specific tags if available) as weak
+        current_weak = self.weak_topics or []
+
+        if self.accuracy_percentage < 40 and self.questions_attempted >= 5:
+            if self.category.name_en not in current_weak:
+                current_weak.append(self.category.name_en)
+        elif self.accuracy_percentage > 60:
+            if self.category.name_en in current_weak:
+                current_weak.remove(self.category.name_en)
+
+        self.weak_topics = current_weak
+        self.save(update_fields=["weak_topics"])
 
 
 class StudyCollection(models.Model):
@@ -111,21 +145,18 @@ class StudyCollection(models.Model):
     def __str__(self):
         return f"{self.name} by {self.created_by.username}"
 
-    # TODO: Add method to get total questions in collection
-    # def get_question_count(self):
-    #     pass
+    def get_question_count(self):
+        return self.questions.count()
 
-    # TODO: Add method to add multiple questions at once
-    # def add_questions(self, question_ids):
-    #     pass
+    def add_questions(self, question_ids):
+        self.questions.add(*question_ids)
 
-    # TODO: Add method to remove questions
-    # def remove_questions(self, question_ids):
-    #     pass
+    def remove_questions(self, question_ids):
+        self.questions.remove(*question_ids)
 
-    # TODO: Add method to share collection with other users
-    # def share_collection(self):
-    #     pass
+    def share_collection(self):
+        self.is_private = False
+        self.save(update_fields=["is_private"])
 
 
 class UserStatistics(models.Model):
@@ -181,18 +212,60 @@ class UserStatistics(models.Model):
     def __str__(self):
         return f"{self.user.username} Stats"
 
-    # TODO: Add method to update streak (call daily)
-    # def update_streak(self):
-    #     pass
+    def update_streak(self):
+        today = timezone.now().date()
+        yesterday = today - timedelta(days=1)
 
-    # TODO: Add method to check and award badges
-    # def check_badge_eligibility(self):
-    #     pass
+        if self.last_activity_date == today:
+            return  # Already updated for today
 
-    # TODO: Add method to calculate accuracy percentage
-    # def get_accuracy_percentage(self):
-    #     pass
+        if self.last_activity_date == yesterday:
+            self.study_streak_days += 1
+        else:
+            self.study_streak_days = 1  # Reset or start new
 
-    # TODO: Add method to get all earned badge details
-    # def get_badges_list(self):
-    #     pass
+        if self.study_streak_days > self.longest_streak:
+            self.longest_streak = self.study_streak_days
+
+        self.last_activity_date = today
+        self.save(
+            update_fields=["study_streak_days", "longest_streak", "last_activity_date"]
+        )
+
+    def check_badge_eligibility(self):
+        badges = self.badges_earned or {}
+        awarded = False
+
+        # Example Badges
+        if "First Step" not in badges and self.questions_answered >= 1:
+            badges["First Step"] = {
+                "date": str(self.last_updated.date()),
+                "desc": "Answered first question",
+            }
+            awarded = True
+
+        if "Streak Master" not in badges and self.study_streak_days >= 7:
+            badges["Streak Master"] = {
+                "date": str(self.last_updated.date()),
+                "desc": "7 day streak",
+            }
+            awarded = True
+
+        if "Contributor" not in badges and self.questions_contributed >= 1:
+            badges["Contributor"] = {
+                "date": str(self.last_updated.date()),
+                "desc": "Contributed a question",
+            }
+            awarded = True
+
+        if awarded:
+            self.badges_earned = badges
+            self.save(update_fields=["badges_earned"])
+
+    def get_accuracy_percentage(self):
+        if self.questions_answered == 0:
+            return 0.0
+        return (self.correct_answers / self.questions_answered) * 100
+
+    def get_badges_list(self):
+        return self.badges_earned

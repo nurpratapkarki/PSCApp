@@ -84,17 +84,52 @@ class MockTest(models.Model):
             self.slug = slugify(self.title_en)
         super().save(*args, **kwargs)
 
-    # TODO: Add method to auto-generate test from question pool
-    # def generate_from_categories(self, category_distribution):
-    #     pass
+    def generate_from_categories(self, category_distribution):
+        # category_distribution: dict {category_id: count}
+        order_counter = 1
+        created_questions = []
 
-    # TODO: Add method to get average score
-    # def get_average_score(self):
-    #     pass
+        # Clear existing questions if any? Or append? Assuming append or fresh test.
+        # But if we want to regenerate, we should probably clear.
+        # self.test_questions.all().delete() # Safer not to delete blindly in a vague method
 
-    # TODO: Add method to get completion rate
-    # def get_completion_rate(self):
-    #     pass
+        for category_id, count in category_distribution.items():
+            questions = list(
+                Question.objects.filter(
+                    category_id=category_id, status="PUBLIC"
+                ).order_by("?")[:count]
+            )
+
+            for q in questions:
+                created_questions.append(
+                    MockTestQuestion(
+                        mock_test=self,
+                        question=q,
+                        question_order=order_counter,
+                        marks_allocated=1.0,  # Default/Configs could specify this later
+                    )
+                )
+                order_counter += 1
+
+        MockTestQuestion.objects.bulk_create(created_questions)
+
+    def get_average_score(self):
+        from django.db.models import Avg
+
+        from src.models.attempt_answer import UserAttempt
+
+        result = UserAttempt.objects.filter(
+            mock_test=self, status="COMPLETED"
+        ).aggregate(avg_score=Avg("score_obtained"))
+
+        return result["avg_score"] or 0.0
+
+    def get_completion_rate(self):
+        total = self.user_attempts.count()
+        if total == 0:
+            return 0.0
+        completed = self.user_attempts.filter(status="COMPLETED").count()
+        return (completed / total) * 100
 
 
 class MockTestQuestion(models.Model):
