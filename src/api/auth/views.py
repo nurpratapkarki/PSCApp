@@ -60,16 +60,3 @@ class DevLoginView(APIView):
             "refresh": str(refresh_token),
         }
         return Response(data)
-
-        data = {
-            "user": {
-                "pk": user.pk,
-                "username": user.username,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-            },
-            "access": str(self.access_token),
-            "refresh": str(self.refresh_token),
-        }
-        return Response(data)
