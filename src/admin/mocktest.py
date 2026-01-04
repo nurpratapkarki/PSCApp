@@ -34,7 +34,14 @@ class MockTestAdmin(admin.ModelAdmin):
         (
             "General Information",
             {
-                "fields": ("title_en", "title_np", "slug", "test_type"),
+                "fields": (
+                    "title_en",
+                    "title_np",
+                    "slug",
+                    "test_type",
+                    "description_en",
+                    "description_np",
+                ),
             },
         ),
         (
@@ -42,8 +49,10 @@ class MockTestAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "branch",
-                    "time_limit_minutes",
-                    "total_marks",
+                    "sub_branch",
+                    "total_questions",
+                    "duration_minutes",
+                    "use_standard_duration",
                     "pass_percentage",
                 ),
             },

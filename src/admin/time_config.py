@@ -31,8 +31,6 @@ class TimeConfigurationAdmin(admin.ModelAdmin):
                 "fields": (
                     "standard_duration_minutes",
                     "questions_count",
-                    "marks_per_question",
-                    "negative_marks_per_question",
                 ),
             },
         ),

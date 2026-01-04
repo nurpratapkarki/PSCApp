@@ -32,6 +32,13 @@ class QuestionAdmin(admin.ModelAdmin):
     )
     list_editable = ("status", "is_public", "difficulty_level")
     search_fields = ("question_text_en", "question_text_np")
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "times_attempted",
+        "times_correct",
+        "reported_count",
+    )
     inlines = [AnswerInline]
     fieldsets = (
         (
@@ -126,7 +133,7 @@ class QuestionReportAdmin(admin.ModelAdmin):
         (
             "Resolution Info",
             {
-                "fields": ("status", "resolved_by", "resolved_at", "resolution_note"),
+                "fields": ("status", "reviewed_by", "resolved_at", "admin_notes"),
             },
         ),
         (
