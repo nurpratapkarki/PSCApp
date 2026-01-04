@@ -14,7 +14,49 @@ class UserStatisticsAdmin(admin.ModelAdmin):
         "accuracy_rank",
     )
     search_fields = ("user__email",)
-    readonly_fields = ("badges_earned",)
+    readonly_fields = ("badges_earned", "last_updated")
+    autocomplete_fields = ["user"]
+
+    fieldsets = (
+        (
+            "User Information",
+            {
+                "fields": ("user",),
+            },
+        ),
+        (
+            "Study Metrics",
+            {
+                "fields": (
+                    "questions_answered",
+                    "correct_answers",
+                    "mock_tests_completed",
+                    "study_streak_days",
+                    "longest_streak",
+                    "last_activity_date",
+                ),
+            },
+        ),
+        (
+            "Contribution Metrics",
+            {
+                "fields": ("questions_contributed", "questions_made_public"),
+            },
+        ),
+        (
+            "Rankings & Achievements",
+            {
+                "fields": ("contribution_rank", "accuracy_rank", "badges_earned"),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("last_updated",),
+                "classes": ("collapse",),
+            },
+        ),
+    )
 
 
 @admin.register(UserProgress, site=CustomAdmin)

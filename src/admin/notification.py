@@ -19,4 +19,38 @@ class NotificationAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
     date_hierarchy = "created_at"
     list_per_page = 50
-    autocomplete_fields = ["user"]
+    autocomplete_fields = ["user", "related_question", "related_mock_test"]
+
+    fieldsets = (
+        (
+            "User & Type",
+            {
+                "fields": ("user", "notification_type", "is_read"),
+            },
+        ),
+        (
+            "Content (EN)",
+            {
+                "fields": ("title_en", "message_en"),
+            },
+        ),
+        (
+            "Content (NP)",
+            {
+                "fields": ("title_np", "message_np"),
+            },
+        ),
+        (
+            "Context & Action",
+            {
+                "fields": ("related_question", "related_mock_test", "action_url"),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_at",),
+                "classes": ("collapse",),
+            },
+        ),
+    )

@@ -36,6 +36,36 @@ class SubBranchAdmin(admin.ModelAdmin):
     list_filter = ("branch", "is_active")
     search_fields = ("name_en", "name_np")
     prepopulated_fields = {"slug": ("name_en",)}
+    readonly_fields = ("created_at", "updated_at")
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "branch",
+                    "name_en",
+                    "name_np",
+                    "slug",
+                    "description_en",
+                    "description_np",
+                ),
+            },
+        ),
+        (
+            "Display Settings",
+            {
+                "fields": ("icon", "display_order", "is_active"),
+            },
+        ),
+        (
+            "Metadata",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
 
 
 @admin.register(Category, site=CustomAdmin)
