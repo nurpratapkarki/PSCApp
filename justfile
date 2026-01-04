@@ -16,7 +16,7 @@ dev-server HOST="0.0.0.0" PORT="8000":
 
 # Create migrations for all apps
 makemigrations:
-    uv run python manage.py makemigrations
+    uv run python manage.py makemigrations src
 
 # Create migrations for specific app
 makemigrations-app APP:
@@ -24,12 +24,12 @@ makemigrations-app APP:
 
 # Run all migrations
 migrate:
-    uv run python manage.py migrate
+    uv run python manage.py migrate src
 
 # Reset database (delete all migrations)
 reset-db:
     uv run python manage.py flush --noinput
-    uv run python manage.py migrate
+    uv run python manage.py migrate src
 
 # Create superuser
 createsuperuser:
@@ -196,13 +196,13 @@ pin-deps:
 setup:
     uv sync
     just pin-deps
-    uv run python manage.py migrate
+    uv run python manage.py migrate src
     uv run python manage.py createsuperuser
 
 # Complete setup including static files
 setup-complete:
     uv sync
-    uv run python manage.py migrate
+    uv run python manage.py migrate src
     uv run python manage.py collectstatic --noinput
     uv run python manage.py createsuperuser
 
