@@ -24,6 +24,7 @@ dependencies = [
     "django-filter>=25.2",
     "dj-rest-auth[with-social]>=5.0.2",
     "django-allauth>=0.57.2",
+    "faker>=40.1.0",
 ]
 
 [tool.ruff]
