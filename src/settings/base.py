@@ -248,10 +248,9 @@ ACCOUNT_USERNAME_REQUIRED = False
 
 # dj-rest-auth settings
 REST_AUTH = {
-    "USE_JWT": True,
-    "JWT_AUTH_COOKIE": "psc-auth",
-    "JWT_AUTH_REFRESH_COOKIE": "psc-refresh-token",
-    "USER_DETAILS_SERIALIZER": "src.api.user.serializers.UserProfileSerializer",  # Explicitly point to our user serializer if needed, or keep default
+	"USE_JWT": True,
+	"JWT_AUTH_COOKIE": "psc-auth",
+	"JWT_AUTH_REFRESH_COOKIE": "psc-refresh-token",
 }
 # Authenticate if local account with this email address already exists
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True

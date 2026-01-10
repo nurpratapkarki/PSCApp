@@ -50,6 +50,5 @@ router.register(r"settings", AppSettingsViewSet)
 router.register(r"time-configs", TimeConfigurationViewSet)
 
 urlpatterns = [
-    path("auth/", include("src.api.user.urls")),
-    path("", include(router.urls)),
+	path("", include(router.urls)),
 ]

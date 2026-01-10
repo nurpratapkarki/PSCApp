@@ -16,8 +16,9 @@ from src.admin.custom_admin import CustomAdmin
 from src.api.auth.views import DevLoginView, GoogleLogin
 
 urlpatterns = [
-    path("api/auth/dev-login/", DevLoginView.as_view(), name="dev_login"),
-    path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
+	path("api/auth/dev-login/", DevLoginView.as_view(), name="dev_login"),
+	path("api/auth/user/", include("src.api.user.urls")),
+	path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
     path("api/auth/", include("dj_rest_auth.urls")),
     path("api/auth/google/", GoogleLogin.as_view(), name="google_login"),
     path("api/", include("src.api.urls")),
