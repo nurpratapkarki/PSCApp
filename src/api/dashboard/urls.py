@@ -61,4 +61,46 @@ urlpatterns = [
         views.resolve_report,
         name="resolve_report",
     ),
+    # Bulk Actions
+    path(
+        "bulk/contributions/approve/",
+        views.bulk_approve_contributions,
+        name="bulk_approve_contributions",
+    ),
+    path(
+        "bulk/contributions/reject/",
+        views.bulk_reject_contributions,
+        name="bulk_reject_contributions",
+    ),
+    path(
+        "bulk/contributions/make-public/",
+        views.bulk_make_public,
+        name="bulk_make_public",
+    ),
+    path(
+        "bulk/reports/resolve/",
+        views.bulk_resolve_reports,
+        name="bulk_resolve_reports",
+    ),
+    path(
+        "bulk/questions/publish/",
+        views.bulk_publish_questions,
+        name="bulk_publish_questions",
+    ),
+    # CSV Exports
+    path(
+        "export/contributions/",
+        views.export_contributions_csv,
+        name="export_contributions",
+    ),
+    path(
+        "export/questions/",
+        views.export_questions_csv,
+        name="export_questions",
+    ),
+    path(
+        "export/reports/",
+        views.export_reports_csv,
+        name="export_reports",
+    ),
 ]

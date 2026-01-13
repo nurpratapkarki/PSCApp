@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-from src.admin.custom_admin import CustomAdmin
 from src.models.branch import Branch, Category, SubBranch
 
 
@@ -10,7 +9,7 @@ class SubBranchInline(admin.TabularInline):
     prepopulated_fields = {"slug": ("name_en",)}
 
 
-@admin.register(Branch, site=CustomAdmin)
+@admin.register(Branch)
 class BranchAdmin(admin.ModelAdmin):
     list_display = (
         "name_en",
@@ -30,7 +29,7 @@ class BranchAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(SubBranch, site=CustomAdmin)
+@admin.register(SubBranch)
 class SubBranchAdmin(admin.ModelAdmin):
     list_display = ("name_en", "branch", "is_active", "display_order")
     list_filter = ("branch", "is_active")
@@ -68,7 +67,7 @@ class SubBranchAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(Category, site=CustomAdmin)
+@admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = (
         "name_en",

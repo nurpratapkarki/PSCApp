@@ -1,10 +1,9 @@
 from django.contrib import admin
 
-from src.admin.custom_admin import CustomAdmin
 from src.models.user_stats import StudyCollection, UserProgress, UserStatistics
 
 
-@admin.register(UserStatistics, site=CustomAdmin)
+@admin.register(UserStatistics)
 class UserStatisticsAdmin(admin.ModelAdmin):
     list_display = (
         "user",
@@ -59,7 +58,7 @@ class UserStatisticsAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(UserProgress, site=CustomAdmin)
+@admin.register(UserProgress)
 class UserProgressAdmin(admin.ModelAdmin):
     list_display = (
         "user",
@@ -91,7 +90,7 @@ class UserProgressAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(StudyCollection, site=CustomAdmin)
+@admin.register(StudyCollection)
 class StudyCollectionAdmin(admin.ModelAdmin):
     list_display = ("name", "created_by", "is_private", "get_question_count")
     list_filter = ("is_private",)

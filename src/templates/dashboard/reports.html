@@ -94,6 +94,9 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>Reports ({{ reports.paginator.count }} total)</span>
         <div>
+            <a href="{% url 'dashboard:export_reports' %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-outline-light me-2">
+                <i class="fas fa-download me-1"></i>Export CSV
+            </a>
             <button class="btn btn-sm btn-success" id="bulkResolve" disabled>
                 <i class="fas fa-check me-1"></i>Resolve Selected
             </button>
@@ -185,9 +188,19 @@
         {% endif %}
         
         {% for num in reports.paginator.page_range %}
-        <li class="page-item {% if reports.number == num %}active{% endif %}">
-            <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
-        </li>
+            {% if reports.paginator.num_pages > 10 %}
+                {% if num == 1 or num == reports.paginator.num_pages or num >= reports.number|add:"-2" and num <= reports.number|add:"2" %}
+                <li class="page-item {% if reports.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
+                </li>
+                {% elif num == reports.number|add:"-3" or num == reports.number|add:"3" %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% else %}
+                <li class="page-item {% if reports.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
+                </li>
+            {% endif %}
         {% endfor %}
         
         {% if reports.has_next %}
@@ -260,6 +273,32 @@
     </div>
 </div>
 {% endfor %}
+
+<!-- Bulk Resolve Modal -->
+<div class="modal fade" id="bulkResolveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Resolve Reports</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'dashboard:bulk_resolve_reports' %}" id="bulkResolveForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>You are about to resolve <strong id="bulkResolveCount">0</strong> reports.</p>
+                    <div class="mb-3">
+                        <label for="bulk_admin_notes" class="form-label">Admin Notes</label>
+                        <textarea name="admin_notes" id="bulk_admin_notes" class="form-control" rows="3" placeholder="Bulk resolved via dashboard..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Resolve All</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -268,6 +307,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectAll = document.getElementById('selectAll');
     const checkboxes = document.querySelectorAll('.report-checkbox');
     const bulkResolve = document.getElementById('bulkResolve');
+    const bulkResolveModal = new bootstrap.Modal(document.getElementById('bulkResolveModal'));
     
     selectAll.addEventListener('change', function() {
         checkboxes.forEach(cb => cb.checked = this.checked);
@@ -282,6 +322,33 @@ document.addEventListener('DOMContentLoaded', function() {
         const checked = document.querySelectorAll('.report-checkbox:checked').length;
         bulkResolve.disabled = checked === 0;
     }
+    
+    function getSelectedIds() {
+        return Array.from(document.querySelectorAll('.report-checkbox:checked')).map(cb => cb.value);
+    }
+    
+    // Bulk Resolve button
+    bulkResolve.addEventListener('click', function() {
+        const selectedIds = getSelectedIds();
+        if (selectedIds.length === 0) return;
+        
+        document.getElementById('bulkResolveCount').textContent = selectedIds.length;
+        
+        // Clear previous hidden inputs
+        const form = document.getElementById('bulkResolveForm');
+        form.querySelectorAll('input[name="report_ids"]').forEach(i => i.remove());
+        
+        // Add new hidden inputs
+        selectedIds.forEach(id => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'report_ids';
+            input.value = id;
+            form.appendChild(input);
+        });
+        
+        bulkResolveModal.show();
+    });
     
     document.querySelectorAll('.resolve-btn').forEach(btn => {
         btn.addEventListener('click', function() {

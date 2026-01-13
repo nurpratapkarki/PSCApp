@@ -53,6 +53,167 @@ BUILT_IN_APPS = [
 INSTALLED_APPS = BUILT_IN_APPS + THIRD_PARTY_APPS + USER_DEFINED_APPS
 INSTALLED_APPS.insert(0, "jazzmin")
 
+# Jazzmin Admin Theme Settings
+JAZZMIN_SETTINGS = {
+    # Title of the window (Will default to current_admin_site.site_title)
+    "site_title": "PSC App Admin",
+    # Title on the brand (Will default to current_admin_site.site_header)
+    "site_header": "PSC App",
+    # Logo to use for your site
+    "site_logo": None,
+    # Welcome text on the login screen
+    "welcome_sign": "Welcome to PSC Exam Preparation Admin",
+    # Copyright on the footer
+    "copyright": "PSC Exam Prep Platform",
+    # List of model admins to search from the search bar
+    "search_model": ["auth.User", "src.Question", "src.Contribution"],
+    # Field name on user model that contains avatar
+    "user_avatar": None,
+    #############
+    # Top Menu #
+    #############
+    # Links to put along the top menu
+    "topmenu_links": [
+        {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
+        {"name": "Dashboard", "url": "/dashboard/", "new_window": False},
+        {"app": "src"},
+    ],
+    #############
+    # Side Menu #
+    #############
+    # Whether to display the side menu
+    "show_sidebar": True,
+    # Whether to auto expand the menu
+    "navigation_expanded": True,
+    # Custom links to append to app groups
+    "custom_links": {
+        "src": [
+            {
+                "name": "📊 Dashboard",
+                "url": "/dashboard/",
+                "icon": "fas fa-chart-line",
+                "permissions": ["auth.view_user"],
+            },
+            {
+                "name": "📝 Contributions",
+                "url": "/dashboard/contributions/",
+                "icon": "fas fa-file-alt",
+                "permissions": ["auth.view_user"],
+            },
+            {
+                "name": "❓ Questions Manager",
+                "url": "/dashboard/questions/",
+                "icon": "fas fa-question-circle",
+                "permissions": ["auth.view_user"],
+            },
+            {
+                "name": "🚩 Question Reports",
+                "url": "/dashboard/reports/",
+                "icon": "fas fa-flag",
+                "permissions": ["auth.view_user"],
+            },
+            {
+                "name": "📥 Export Contributions",
+                "url": "/dashboard/export/contributions/",
+                "icon": "fas fa-download",
+                "permissions": ["auth.view_user"],
+            },
+            {
+                "name": "📥 Export Questions",
+                "url": "/dashboard/export/questions/",
+                "icon": "fas fa-download",
+                "permissions": ["auth.view_user"],
+            },
+            {
+                "name": "📥 Export Reports",
+                "url": "/dashboard/export/reports/",
+                "icon": "fas fa-download",
+                "permissions": ["auth.view_user"],
+            },
+        ],
+    },
+    # Custom icons for side menu apps/models
+    "icons": {
+        "auth": "fas fa-users-cog",
+        "auth.user": "fas fa-user",
+        "auth.Group": "fas fa-users",
+        "src.Question": "fas fa-question-circle",
+        "src.Answer": "fas fa-check-circle",
+        "src.QuestionReport": "fas fa-flag",
+        "src.Branch": "fas fa-sitemap",
+        "src.Category": "fas fa-folder",
+        "src.SubBranch": "fas fa-folder-open",
+        "src.MockTest": "fas fa-clipboard-list",
+        "src.UserAttempt": "fas fa-edit",
+        "src.UserAnswer": "fas fa-check-double",
+        "src.Contribution": "fas fa-file-alt",
+        "src.DailyActivity": "fas fa-calendar-day",
+        "src.LeaderBoard": "fas fa-trophy",
+        "src.PlatformStats": "fas fa-chart-bar",
+        "src.StudyCollection": "fas fa-bookmark",
+        "src.UserProgress": "fas fa-chart-line",
+        "src.UserStatistics": "fas fa-user-chart",
+        "src.Notification": "fas fa-bell",
+        "src.AppSettings": "fas fa-cog",
+        "src.TimeConfiguration": "fas fa-clock",
+        "src.UserProfile": "fas fa-id-card",
+    },
+    # Default icon classes
+    "default_icon_parents": "fas fa-chevron-circle-right",
+    "default_icon_children": "fas fa-circle",
+    #############
+    # UI Tweaks #
+    #############
+    # Relative paths to custom CSS/JS scripts (must be present in static files)
+    "custom_css": None,
+    "custom_js": None,
+    # Whether to show the UI customizer on the sidebar
+    "show_ui_builder": False,
+    ###############
+    # Change view #
+    ###############
+    # Render out the change view as a single form, or in tabs
+    "changeform_format": "horizontal_tabs",
+    # Override change forms on a per modeladmin basis
+    "changeform_format_overrides": {
+        "auth.user": "collapsible",
+        "auth.group": "vertical_tabs",
+    },
+}
+
+# Jazzmin UI Tweaks
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "brand_colour": "navbar-primary",
+    "accent": "accent-primary",
+    "navbar": "navbar-dark navbar-primary",
+    "no_navbar_border": False,
+    "navbar_fixed": True,
+    "layout_boxed": False,
+    "footer_fixed": False,
+    "sidebar_fixed": True,
+    "sidebar": "sidebar-dark-primary",
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": False,
+    "sidebar_nav_compact_style": False,
+    "sidebar_nav_legacy_style": False,
+    "sidebar_nav_flat_style": False,
+    "theme": "default",
+    "dark_mode_theme": None,
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
+}
+
 # django.contrib.sites
 SITE_ID = 1
 
@@ -248,9 +409,9 @@ ACCOUNT_USERNAME_REQUIRED = False
 
 # dj-rest-auth settings
 REST_AUTH = {
-	"USE_JWT": True,
-	"JWT_AUTH_COOKIE": "psc-auth",
-	"JWT_AUTH_REFRESH_COOKIE": "psc-refresh-token",
+    "USE_JWT": True,
+    "JWT_AUTH_COOKIE": "psc-auth",
+    "JWT_AUTH_REFRESH_COOKIE": "psc-refresh-token",
 }
 # Authenticate if local account with this email address already exists
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
