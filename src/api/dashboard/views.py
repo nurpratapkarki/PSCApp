@@ -3,6 +3,7 @@ Dashboard views for managing contributions, questions, and platform analytics.
 Provides a custom admin-like interface for moderation and monitoring.
 """
 
+import csv
 import json
 from datetime import timedelta
 
@@ -10,6 +11,7 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -447,3 +449,373 @@ def resolve_report(request, pk):
     if next_url:
         return redirect(next_url)
     return redirect("dashboard:reports")
+
+
+# =============================================================================
+# BULK ACTIONS
+# =============================================================================
+
+
+@staff_member_required
+@require_POST
+def bulk_approve_contributions(request):
+    """Approve multiple contributions at once."""
+    contribution_ids = request.POST.getlist("contribution_ids")
+    if not contribution_ids:
+        messages.error(request, "No contributions selected.")
+        return redirect("dashboard:contributions")
+
+    approved_count = 0
+    for contrib_id in contribution_ids:
+        try:
+            contribution = Contribution.objects.get(pk=int(contrib_id))
+            if contribution.status == "PENDING":
+                contribution.approve_contribution()
+
+                # Create notification for contributor
+                Notification.objects.create(
+                    user=contribution.user,
+                    notification_type="CONTRIBUTION_APPROVED",
+                    title_en="Contribution Approved!",
+                    title_np="योगदान स्वीकृत भयो!",
+                    message_en="Your question has been approved.",
+                    message_np="तपाईंको प्रश्न स्वीकृत भएको छ।",
+                    related_question=contribution.question,
+                )
+                approved_count += 1
+        except Contribution.DoesNotExist:
+            continue
+
+    messages.success(request, f"{approved_count} contributions have been approved.")
+    return redirect("dashboard:contributions")
+
+
+@staff_member_required
+@require_POST
+def bulk_reject_contributions(request):
+    """Reject multiple contributions at once."""
+    contribution_ids = request.POST.getlist("contribution_ids")
+    rejection_reason = request.POST.get(
+        "rejection_reason", "Did not meet quality standards."
+    )
+
+    if not contribution_ids:
+        messages.error(request, "No contributions selected.")
+        return redirect("dashboard:contributions")
+
+    rejected_count = 0
+    for contrib_id in contribution_ids:
+        try:
+            contribution = Contribution.objects.get(pk=int(contrib_id))
+            if contribution.status == "PENDING":
+                contribution.reject_contribution(rejection_reason)
+
+                # Notify contributor
+                Notification.objects.create(
+                    user=contribution.user,
+                    notification_type="GENERAL",
+                    title_en="Contribution Not Approved",
+                    title_np="योगदान स्वीकृत भएन",
+                    message_en=f"Your question was not approved. Reason: {rejection_reason}",
+                    message_np=f"तपाईंको प्रश्न स्वीकृत भएन। कारण: {rejection_reason}",
+                    related_question=contribution.question,
+                )
+                rejected_count += 1
+        except Contribution.DoesNotExist:
+            continue
+
+    messages.warning(request, f"{rejected_count} contributions have been rejected.")
+    return redirect("dashboard:contributions")
+
+
+@staff_member_required
+@require_POST
+def bulk_make_public(request):
+    """Make multiple approved contributions public at once."""
+    contribution_ids = request.POST.getlist("contribution_ids")
+
+    if not contribution_ids:
+        messages.error(request, "No contributions selected.")
+        return redirect("dashboard:contributions")
+
+    public_count = 0
+    for contrib_id in contribution_ids:
+        try:
+            contribution = Contribution.objects.get(pk=int(contrib_id))
+            if contribution.status == "APPROVED":
+                contribution.make_public()
+
+                # Notify contributor
+                Notification.objects.create(
+                    user=contribution.user,
+                    notification_type="QUESTION_PUBLIC",
+                    title_en="Your Question is Now Public!",
+                    title_np="तपाईंको प्रश्न अब सार्वजनिक छ!",
+                    message_en="Congratulations! Your contributed question is now available.",
+                    message_np="बधाई छ! तपाईंको योगदान गरिएको प्रश्न अब उपलब्ध छ।",
+                    related_question=contribution.question,
+                )
+                public_count += 1
+        except Contribution.DoesNotExist:
+            continue
+
+    messages.success(request, f"{public_count} contributions have been made public.")
+    return redirect("dashboard:contributions")
+
+
+@staff_member_required
+@require_POST
+def bulk_resolve_reports(request):
+    """Resolve multiple reports at once."""
+    report_ids = request.POST.getlist("report_ids")
+    admin_notes = request.POST.get("admin_notes", "Bulk resolved via dashboard.")
+
+    if not report_ids:
+        messages.error(request, "No reports selected.")
+        return redirect("dashboard:reports")
+
+    resolved_count = 0
+    for report_id in report_ids:
+        try:
+            report = QuestionReport.objects.get(pk=int(report_id))
+            if report.status != "RESOLVED":
+                report.resolve_report(request.user, admin_notes)
+                report.notify_creator()
+                resolved_count += 1
+        except QuestionReport.DoesNotExist:
+            continue
+
+    messages.success(request, f"{resolved_count} reports have been resolved.")
+    return redirect("dashboard:reports")
+
+
+@staff_member_required
+@require_POST
+def bulk_publish_questions(request):
+    """Publish multiple questions at once."""
+    question_ids = request.POST.getlist("question_ids")
+
+    if not question_ids:
+        messages.error(request, "No questions selected.")
+        return redirect("dashboard:questions")
+
+    published_count = 0
+    for question_id in question_ids:
+        try:
+            question = Question.objects.get(pk=int(question_id))
+            if question.status != "PUBLIC":
+                question.status = "PUBLIC"
+                question.is_public = True
+                question.save(update_fields=["status", "is_public"])
+                published_count += 1
+        except Question.DoesNotExist:
+            continue
+
+    messages.success(request, f"{published_count} questions have been published.")
+    return redirect("dashboard:questions")
+
+
+# =============================================================================
+# EXPORT FUNCTIONS
+# =============================================================================
+
+
+@staff_member_required
+def export_contributions_csv(request):
+    """Export contributions to CSV file."""
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = (
+        'attachment; filename="contributions_export.csv"'
+    )
+
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "ID",
+            "Contributor",
+            "Email",
+            "Question ID",
+            "Question (EN)",
+            "Category",
+            "Status",
+            "Month",
+            "Year",
+            "Is Featured",
+            "Created At",
+            "Approval Date",
+            "Public Date",
+            "Rejection Reason",
+        ]
+    )
+
+    contributions = Contribution.objects.select_related(
+        "user", "question", "question__category"
+    ).order_by("-created_at")
+
+    # Apply filters from request
+    status = request.GET.get("status")
+    month = request.GET.get("month")
+    year = request.GET.get("year")
+
+    if status:
+        contributions = contributions.filter(status=status)
+    if month:
+        contributions = contributions.filter(contribution_month=int(month))
+    if year:
+        contributions = contributions.filter(contribution_year=int(year))
+
+    for contrib in contributions:
+        writer.writerow(
+            [
+                contrib.id,
+                contrib.user.username,
+                contrib.user.email,
+                contrib.question.id,
+                contrib.question.question_text_en[:100],
+                contrib.question.category.name_en if contrib.question.category else "",
+                contrib.status,
+                contrib.contribution_month,
+                contrib.contribution_year,
+                contrib.is_featured,
+                contrib.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                (
+                    contrib.approval_date.strftime("%Y-%m-%d %H:%M:%S")
+                    if contrib.approval_date
+                    else ""
+                ),
+                (
+                    contrib.public_date.strftime("%Y-%m-%d %H:%M:%S")
+                    if contrib.public_date
+                    else ""
+                ),
+                contrib.rejection_reason or "",
+            ]
+        )
+
+    return response
+
+
+@staff_member_required
+def export_questions_csv(request):
+    """Export questions to CSV file."""
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="questions_export.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "ID",
+            "Question (EN)",
+            "Question (NP)",
+            "Category",
+            "Difficulty",
+            "Status",
+            "Is Public",
+            "Is Verified",
+            "Times Attempted",
+            "Times Correct",
+            "Accuracy %",
+            "Reported Count",
+            "Created By",
+            "Created At",
+        ]
+    )
+
+    questions = Question.objects.select_related("category", "created_by").order_by(
+        "-created_at"
+    )
+
+    # Apply filters
+    status = request.GET.get("status")
+    category = request.GET.get("category")
+    difficulty = request.GET.get("difficulty")
+
+    if status:
+        questions = questions.filter(status=status)
+    if category:
+        questions = questions.filter(category_id=int(category))
+    if difficulty:
+        questions = questions.filter(difficulty_level=difficulty)
+
+    for q in questions:
+        accuracy = q.get_accuracy_rate()
+        writer.writerow(
+            [
+                q.id,
+                q.question_text_en[:200],
+                q.question_text_np[:200],
+                q.category.name_en if q.category else "",
+                q.difficulty_level or "",
+                q.status,
+                q.is_public,
+                q.is_verified,
+                q.times_attempted,
+                q.times_correct,
+                f"{accuracy:.2f}",
+                q.reported_count,
+                q.created_by.username if q.created_by else "System",
+                q.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            ]
+        )
+
+    return response
+
+
+@staff_member_required
+def export_reports_csv(request):
+    """Export question reports to CSV file."""
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="reports_export.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(
+        [
+            "ID",
+            "Question ID",
+            "Question Text",
+            "Reason",
+            "Description",
+            "Status",
+            "Reported By",
+            "Reviewed By",
+            "Admin Notes",
+            "Created At",
+            "Resolved At",
+        ]
+    )
+
+    reports = QuestionReport.objects.select_related(
+        "question", "reported_by", "reviewed_by"
+    ).order_by("-created_at")
+
+    # Apply filters
+    status = request.GET.get("status")
+    reason = request.GET.get("reason")
+
+    if status:
+        reports = reports.filter(status=status)
+    if reason:
+        reports = reports.filter(reason=reason)
+
+    for report in reports:
+        writer.writerow(
+            [
+                report.id,
+                report.question.id,
+                report.question.question_text_en[:100],
+                report.get_reason_display(),
+                report.description[:200],
+                report.get_status_display(),
+                report.reported_by.username if report.reported_by else "Anonymous",
+                report.reviewed_by.username if report.reviewed_by else "",
+                report.admin_notes or "",
+                report.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                (
+                    report.resolved_at.strftime("%Y-%m-%d %H:%M:%S")
+                    if report.resolved_at
+                    else ""
+                ),
+            ]
+        )
+
+    return response

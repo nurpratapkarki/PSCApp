@@ -98,6 +98,9 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <span>Questions ({{ questions.paginator.count }} total)</span>
         <div>
+            <a href="{% url 'dashboard:export_questions' %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-outline-light me-2">
+                <i class="fas fa-download me-1"></i>Export CSV
+            </a>
             <button class="btn btn-sm btn-success" id="bulkPublish" disabled>
                 <i class="fas fa-globe me-1"></i>Make Public
             </button>
@@ -219,6 +222,11 @@
     </ul>
 </nav>
 {% endif %}
+
+<!-- Bulk Publish Form (hidden) -->
+<form method="post" action="{% url 'dashboard:bulk_publish_questions' %}" id="bulkPublishForm" style="display:none;">
+    {% csrf_token %}
+</form>
 {% endblock %}
 
 {% block extra_js %}
@@ -241,6 +249,28 @@ document.addEventListener('DOMContentLoaded', function() {
         const checked = document.querySelectorAll('.question-checkbox:checked').length;
         bulkPublish.disabled = checked === 0;
     }
+    
+    function getSelectedIds() {
+        return Array.from(document.querySelectorAll('.question-checkbox:checked')).map(cb => cb.value);
+    }
+    
+    // Bulk Publish
+    bulkPublish.addEventListener('click', function() {
+        const selectedIds = getSelectedIds();
+        if (selectedIds.length === 0) return;
+        
+        if (confirm(`Make ${selectedIds.length} questions public?`)) {
+            const form = document.getElementById('bulkPublishForm');
+            selectedIds.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'question_ids';
+                input.value = id;
+                form.appendChild(input);
+            });
+            form.submit();
+        }
+    });
     
     document.querySelectorAll('.publish-btn').forEach(btn => {
         btn.addEventListener('click', function() {
