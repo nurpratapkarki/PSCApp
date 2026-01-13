@@ -13,9 +13,8 @@ admin.site.unregister(Group)
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ("username", "email", "first_name", "last_name", "is_staff")
-    search_fields = ("username", "email", "first_name", "last_name")
-    list_filter = ("is_staff", "is_superuser", "is_active")
+    """Custom User Admin that inherits all functionality from Django's UserAdmin."""
+
     list_per_page = 50
 
 
