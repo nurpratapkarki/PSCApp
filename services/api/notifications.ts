@@ -6,6 +6,7 @@ import type { Notification } from "../../types/contribution.types";
 
 export interface NotificationListParams {
 	page?: number;
+	is_read?: boolean;
 }
 
 export async function listNotifications(
@@ -17,6 +18,15 @@ export async function listNotifications(
 		`${API_ENDPOINTS.notifications.list}${query}`,
 		{ token: token ?? undefined },
 	);
+}
+
+export async function getNotification(
+	id: number,
+	token?: string | null,
+): Promise<Notification> {
+	return apiRequest<Notification>(API_ENDPOINTS.notifications.detail(id), {
+		token: token ?? undefined,
+	});
 }
 
 export async function markNotificationRead(

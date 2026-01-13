@@ -25,6 +25,29 @@ export async function listContributions(
 	);
 }
 
+// List current user's contributions
+export async function listMyContributions(
+	params: ContributionListParams = {},
+	token?: string | null,
+): Promise<PaginatedResponse<Contribution>> {
+	const query = buildQuery(params);
+	return apiRequest<PaginatedResponse<Contribution>>(
+		`${API_ENDPOINTS.analytics.myContributions}${query}`,
+		{ token: token ?? undefined },
+	);
+}
+
+// Get a single contribution
+export async function getContribution(
+	id: number,
+	token?: string | null,
+): Promise<Contribution> {
+	return apiRequest<Contribution>(
+		`${API_ENDPOINTS.analytics.contributions}${id}/`,
+		{ token: token ?? undefined },
+	);
+}
+
 // Admin-only detailed activity stats. Still useful for dashboards.
 export interface DailyActivityListParams {
 	page?: number;

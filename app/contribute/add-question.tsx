@@ -8,6 +8,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { usePaginatedApi } from '../../hooks/usePaginatedApi';
 import { Branch, Category } from '../../types/category.types';
 import { createQuestion, bulkUploadQuestions, BulkUploadResponse } from '../../services/api/questions';
+import { validateUploadFile, VALID_UPLOAD_MIME_TYPES } from '../../utils/fileValidation';
 import { Colors } from '../../constants/colors';
 import { Spacing, BorderRadius } from '../../constants/typography';
 
@@ -111,28 +112,29 @@ export default function AddQuestionScreen() {
   const handleFilePick = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: [
-          'application/pdf',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'application/vnd.ms-excel',
-        ],
+        type: [...VALID_UPLOAD_MIME_TYPES],
         copyToCacheDirectory: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const file = result.assets[0];
-        const fileName = file.name.toLowerCase();
         
-        // Validate file type
-        if (!fileName.endsWith('.pdf') && !fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-          Alert.alert('Invalid File', 'Please select a PDF or Excel file (.pdf, .xlsx, .xls)');
+        // Validate file type using shared utility
+        const validation = validateUploadFile({
+          name: file.name,
+          type: file.mimeType,
+          size: file.size,
+        });
+        
+        if (!validation.isValid) {
+          Alert.alert('Invalid File', validation.error || 'Invalid file type');
           return;
         }
         
         setSelectedFile(file);
         setUploadProgress({ uploading: false, result: null });
       }
-    } catch (err) {
+    } catch {
       Alert.alert('Error', 'Failed to pick file');
     }
   };

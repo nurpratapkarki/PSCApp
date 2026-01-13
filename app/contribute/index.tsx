@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Card, Text, Button, ActivityIndicator } from 'react-native-paper';
+import { Card, Text, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useApi } from '../../hooks/useApi';
-import { UserStatistics } from '../../types/contribution.types';
+import { UserStatistics } from '../../types/user.types';
 import { Colors } from '../../constants/colors';
 import { Spacing, BorderRadius } from '../../constants/typography';
 

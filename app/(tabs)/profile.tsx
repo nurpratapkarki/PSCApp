@@ -6,9 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useApi } from '../../hooks/useApi';
 import { User } from '../../types/auth.types';
-import { UserStatistics } from '../../types/contribution.types';
+import { UserStatistics } from '../../types/user.types';
 import { Colors } from '../../constants/colors';
 import { Spacing, BorderRadius } from '../../constants/typography';
+import { useAuth } from '../../hooks/useAuth';
 
 interface MenuItem {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
@@ -21,6 +22,7 @@ interface MenuItem {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { logout } = useAuth();
   const { data: user, status: userStatus } = useApi<User>('/api/auth/user/');
   const { data: stats, status: statsStatus } = useApi<UserStatistics>('/api/statistics/me/');
 
@@ -29,7 +31,10 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     Alert.alert('Logout', 'Are you sure you want to logout?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Logout', style: 'destructive', onPress: () => router.replace('/(auth)/login') },
+      { text: 'Logout', style: 'destructive', onPress: async () => {
+        await logout();
+        router.replace('/(auth)/login');
+      }},
     ]);
   };
 

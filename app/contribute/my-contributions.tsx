@@ -59,7 +59,7 @@ const ContributionCard = ({ contribution, onPress }: { contribution: Contributio
 export default function MyContributionsScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState('all');
-  const { data: contributions, status } = usePaginatedApi<Contribution>('/api/my-contributions/');
+  const { data: contributions, status } = usePaginatedApi<Contribution>('/api/contributions/');
 
   const filteredContributions = contributions?.filter((c) => {
     if (filter === 'all') return true;

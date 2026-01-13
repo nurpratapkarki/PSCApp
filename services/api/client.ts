@@ -22,11 +22,28 @@ export interface RequestOptions {
   isFormData?: boolean;
 }
 
-// Token storage keys
-const ACCESS_TOKEN_KEY = "access_token";
-const REFRESH_TOKEN_KEY = "refresh_token";
+// Token storage keys (used for AsyncStorage in production)
+export const ACCESS_TOKEN_KEY = "access_token";
+export const REFRESH_TOKEN_KEY = "refresh_token";
 
-// In-memory token storage (for React Native, replace with AsyncStorage in production)
+/**
+ * Token storage implementation.
+ * 
+ * NOTE: This implementation uses in-memory storage which will lose tokens on app restart.
+ * For production, implement persistent storage using:
+ * - @react-native-async-storage/async-storage for general storage
+ * - expo-secure-store for secure credential storage
+ * 
+ * Example production implementation:
+ * ```
+ * import * as SecureStore from 'expo-secure-store';
+ * 
+ * export async function setTokens(access: string, refresh?: string) {
+ *   await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, access);
+ *   if (refresh) await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refresh);
+ * }
+ * ```
+ */
 let accessToken: string | null = null;
 let refreshToken: string | null = null;
 
@@ -36,19 +53,23 @@ export function setTokens(access: string, refresh?: string) {
   if (refresh) {
     refreshToken = refresh;
   }
+  // TODO: Persist to AsyncStorage/SecureStore for production
 }
 
 export function getAccessToken(): string | null {
+  // TODO: Read from AsyncStorage/SecureStore for production
   return accessToken;
 }
 
 export function getRefreshToken(): string | null {
+  // TODO: Read from AsyncStorage/SecureStore for production
   return refreshToken;
 }
 
 export function clearTokens() {
   accessToken = null;
   refreshToken = null;
+  // TODO: Clear from AsyncStorage/SecureStore for production
 }
 
 // Token refresh function

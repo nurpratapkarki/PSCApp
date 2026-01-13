@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from "../../config/api.config";
 import { apiRequest, buildQuery, uploadFile } from "./client";
+import { validateUploadFile } from "../../utils/fileValidation";
 
 import type { PaginatedResponse } from "../../types/api.types";
 import type { Branch, SubBranch, Category } from "../../types/category.types";
@@ -205,20 +206,15 @@ export async function bulkUploadQuestions(
 	categoryId: number,
 	token?: string | null,
 ): Promise<BulkUploadResponse> {
-	// Validate file type
-	const validTypes = [
-		"application/pdf",
-		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-		"application/vnd.ms-excel",
-	];
-	const validExtensions = [".pdf", ".xlsx", ".xls"];
+	// Validate file type using shared utility
+	const validation = validateUploadFile({
+		name: file.name,
+		type: file.type,
+		size: file.size,
+	});
 	
-	const fileName = file.name.toLowerCase();
-	const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
-	const hasValidType = validTypes.includes(file.type);
-	
-	if (!hasValidExtension && !hasValidType) {
-		throw new Error("Invalid file type. Only PDF (.pdf) or Excel (.xlsx, .xls) files are allowed.");
+	if (!validation.isValid) {
+		throw new Error(validation.error);
 	}
 	
 	const formData = new FormData();
