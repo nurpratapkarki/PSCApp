@@ -22,6 +22,8 @@ urlpatterns = [
     path("api/auth/", include("dj_rest_auth.urls")),
     path("api/auth/google/", GoogleLogin.as_view(), name="google_login"),
     path("api/", include("src.api.urls")),
+    # Dashboard for moderation
+    path("dashboard/", include("src.api.dashboard.urls", namespace="dashboard")),
     # JWT tokens
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

@@ -98,16 +98,15 @@ def handle_contribution_save(sender, instance, created, **kwargs):
     """
     Update UserProfile contribution counts and notify on approval.
     """
-    user = instance.contributed_by
+    user = instance.user
     if not user:
         return
 
-    profile = user.profile
+    profile = getattr(user, "profile", None)
+    if not profile:
+        return
 
     # Update total contributions count if it's a new valid contribution
-    # Or strict counting from Question/Contribution models?
-    # Let's assume Contribution model tracks specific community submissions.
-
     if created:
         profile.total_contributions += 1
         profile.award_experience_points(
@@ -116,7 +115,7 @@ def handle_contribution_save(sender, instance, created, **kwargs):
         profile.save()
 
     # Create approval notification
-    if instance.status == "APPROVED" and instance.is_public:
+    if instance.status == "APPROVED":
         Notification.objects.create(
             user=user,
             notification_type="CONTRIBUTION_APPROVED",
