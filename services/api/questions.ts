@@ -1,5 +1,5 @@
 import { API_ENDPOINTS } from "../../config/api.config";
-import { apiRequest, buildQuery } from "./client";
+import { apiRequest, buildQuery, uploadFile } from "./client";
 
 import type { PaginatedResponse } from "../../types/api.types";
 import type { Branch, SubBranch, Category } from "../../types/category.types";
@@ -31,29 +31,53 @@ export interface CategoryListParams {
 
 export async function listBranches(
 	params: BranchListParams = {},
+	token?: string | null,
 ): Promise<PaginatedResponse<Branch>> {
 	const query = buildQuery(params);
 	return apiRequest<PaginatedResponse<Branch>>(
 		`${API_ENDPOINTS.branches.list}${query}`,
+		{ token: token ?? undefined },
 	);
+}
+
+export async function getBranch(
+	id: number,
+	token?: string | null,
+): Promise<Branch> {
+	return apiRequest<Branch>(`${API_ENDPOINTS.branches.list}${id}/`, {
+		token: token ?? undefined,
+	});
 }
 
 export async function listSubBranches(
 	params: SubBranchListParams = {},
+	token?: string | null,
 ): Promise<PaginatedResponse<SubBranch>> {
 	const query = buildQuery(params);
 	return apiRequest<PaginatedResponse<SubBranch>>(
 		`${API_ENDPOINTS.branches.subBranches}${query}`,
+		{ token: token ?? undefined },
 	);
 }
 
 export async function listCategories(
 	params: CategoryListParams = {},
+	token?: string | null,
 ): Promise<PaginatedResponse<Category>> {
 	const query = buildQuery(params);
 	return apiRequest<PaginatedResponse<Category>>(
 		`${API_ENDPOINTS.branches.categories}${query}`,
+		{ token: token ?? undefined },
 	);
+}
+
+export async function getCategory(
+	id: number,
+	token?: string | null,
+): Promise<Category> {
+	return apiRequest<Category>(`${API_ENDPOINTS.branches.categories}${id}/`, {
+		token: token ?? undefined,
+	});
 }
 
 // ---- Questions ----
@@ -91,6 +115,37 @@ export async function createQuestion(
 	payload: QuestionCreatePayload,
 	token?: string | null,
 ): Promise<Question> {
+	// If there's an image file, use FormData
+	if (payload.image instanceof File) {
+		const formData = new FormData();
+		
+		// Add all non-file fields
+		formData.append("question_text_en", payload.question_text_en);
+		formData.append("question_text_np", payload.question_text_np);
+		formData.append("category", String(payload.category));
+		formData.append("explanation_en", payload.explanation_en);
+		formData.append("explanation_np", payload.explanation_np);
+		formData.append("consent_given", String(payload.consent_given));
+		
+		if (payload.difficulty_level) {
+			formData.append("difficulty_level", payload.difficulty_level);
+		}
+		if (payload.question_type) {
+			formData.append("question_type", payload.question_type);
+		}
+		if (payload.source_reference) {
+			formData.append("source_reference", payload.source_reference);
+		}
+		
+		// Add answers as JSON
+		formData.append("answers", JSON.stringify(payload.answers));
+		
+		// Add the image file
+		formData.append("image", payload.image);
+		
+		return uploadFile<Question>(API_ENDPOINTS.questions.list, formData, token);
+	}
+	
 	return apiRequest<Question>(API_ENDPOINTS.questions.list, {
 		method: "POST",
 		body: payload,
@@ -120,7 +175,82 @@ export async function deleteQuestion(
 	});
 }
 
+// ---- Bulk Question Upload (PDF/Excel) ----
+
+export interface BulkUploadResponse {
+	success: boolean;
+	uploaded_count: number;
+	failed_count: number;
+	errors?: string[];
+	questions?: Question[];
+}
+
+export interface BulkUploadProgress {
+	total: number;
+	processed: number;
+	success: number;
+	failed: number;
+}
+
+/**
+ * Upload questions in bulk from a PDF or Excel file.
+ * Only valid PDF (.pdf) or Excel (.xlsx, .xls) files are accepted.
+ * 
+ * @param file - The PDF or Excel file containing questions
+ * @param categoryId - The category to assign the questions to
+ * @param token - Optional auth token
+ */
+export async function bulkUploadQuestions(
+	file: File,
+	categoryId: number,
+	token?: string | null,
+): Promise<BulkUploadResponse> {
+	// Validate file type
+	const validTypes = [
+		"application/pdf",
+		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		"application/vnd.ms-excel",
+	];
+	const validExtensions = [".pdf", ".xlsx", ".xls"];
+	
+	const fileName = file.name.toLowerCase();
+	const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+	const hasValidType = validTypes.includes(file.type);
+	
+	if (!hasValidExtension && !hasValidType) {
+		throw new Error("Invalid file type. Only PDF (.pdf) or Excel (.xlsx, .xls) files are allowed.");
+	}
+	
+	const formData = new FormData();
+	formData.append("file", file);
+	formData.append("category", String(categoryId));
+	
+	return uploadFile<BulkUploadResponse>(
+		`${API_ENDPOINTS.questions.list}bulk-upload/`,
+		formData,
+		token,
+	);
+}
+
 // ---- Question Reports ----
+
+export async function listReports(
+	token?: string | null,
+): Promise<PaginatedResponse<QuestionReport>> {
+	return apiRequest<PaginatedResponse<QuestionReport>>(
+		API_ENDPOINTS.questions.reports,
+		{ token: token ?? undefined },
+	);
+}
+
+export async function getReport(
+	id: number,
+	token?: string | null,
+): Promise<QuestionReport> {
+	return apiRequest<QuestionReport>(`${API_ENDPOINTS.questions.reports}${id}/`, {
+		token: token ?? undefined,
+	});
+}
 
 export async function reportQuestion(
 	payload: QuestionReportCreatePayload,

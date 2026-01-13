@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { apiRequest, ApiError } from '../services/api/client';
+import { apiRequest, ApiError, getAccessToken } from '../services/api/client';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
@@ -27,7 +27,12 @@ export const useApi = <T>(endpoint: string, lazy = false) => {
       
       setState({ data: null, error: null, status: 'loading' });
       try {
-        const response = await apiRequest<T>(endpoint, { body });
+        const token = getAccessToken();
+        const response = await apiRequest<T>(endpoint, { 
+          body,
+          token,
+          method: body ? 'POST' : 'GET',
+        });
         setState({ data: response, error: null, status: 'success' });
         return response;
       } catch (err) {

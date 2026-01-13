@@ -2,6 +2,12 @@ import type { UserProfile } from "./user.types";
 
 // Authentication and session-related types
 
+// JWT Token Response (matches README)
+export interface TokenResponse {
+  access: string;
+  refresh: string;
+}
+
 export interface AuthTokens {
   access: string;
   refresh?: string;
@@ -9,7 +15,54 @@ export interface AuthTokens {
 
 export interface AuthUser {
   user: UserProfile;
-  tokens: AuthTokens;
+  tokens: TokenResponse;
+}
+
+// Login Request (matches README)
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+// Google OAuth Request (matches README)
+export interface GoogleLoginRequest {
+  access_token?: string;
+  id_token?: string;
+}
+
+// Registration Request (matches README)
+export interface RegistrationRequest {
+  email: string;
+  password1: string;
+  password2: string;
+  full_name?: string;
+}
+
+// Token Refresh Request (matches README)
+export interface TokenRefreshRequest {
+  refresh: string;
+}
+
+// Token Refresh Response
+export interface TokenRefreshResponse {
+  access: string;
+  refresh?: string;
+}
+
+// Alias for compatibility
+export interface RefreshTokenRequest {
+  refresh: string;
+}
+
+export interface RefreshTokenResponse {
+  access: string;
+  refresh?: string;
+}
+
+// User Session (matches README)
+export interface UserSession {
+  user: UserProfile;
+  tokens: TokenResponse;
 }
 
 // User object returned from /api/auth/user/ endpoint
@@ -22,23 +75,7 @@ export interface User {
   profile: UserProfile;
 }
 
-export interface LoginRequest {
-  email?: string;
-  password?: string;
-  // For Google or other social providers
-  idToken?: string;
-}
-
 export interface LoginResponse extends AuthUser {}
-
-export interface RefreshTokenRequest {
-  refresh: string;
-}
-
-export interface RefreshTokenResponse {
-  access: string;
-  refresh?: string;
-}
 
 // Dev login response mirrors src.api.auth.DevLoginView
 export interface DevLoginUser {

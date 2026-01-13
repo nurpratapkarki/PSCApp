@@ -4,10 +4,10 @@ import { apiRequest, buildQuery } from "./client";
 import type { PaginatedResponse } from "../../types/api.types";
 import type {
 	PlatformStats,
-	UserStatistics,
-	UserProgress,
 	StudyCollection,
+	StudyCollectionCreate,
 } from "../../types/contribution.types";
+import type { UserStatistics, UserProgress } from "../../types/user.types";
 
 export interface UserProgressListParams {
 	page?: number;

@@ -42,9 +42,10 @@ const TestResultsScreen = () => {
   const mockTestObj = typeof attempt.mock_test === 'object' ? (attempt.mock_test as MockTestSummary) : null;
   const passPercentage = mockTestObj?.pass_percentage ?? 50;
   const isPassed = (attempt.percentage || 0) >= passPercentage;
-  const correctCount = attempt.user_answers.filter((a) => a.is_correct).length;
-  const incorrectCount = attempt.user_answers.filter((a) => !a.is_correct && a.selected_answer_text).length;
-  const skippedCount = attempt.user_answers.filter((a) => !a.selected_answer_text).length;
+  const userAnswers = attempt.user_answers || [];
+  const correctCount = userAnswers.filter((a) => a.is_correct).length;
+  const incorrectCount = userAnswers.filter((a) => !a.is_correct && a.selected_answer_text).length;
+  const skippedCount = userAnswers.filter((a) => !a.selected_answer_text).length;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -111,7 +112,7 @@ const TestResultsScreen = () => {
         <Card style={styles.reviewCard}>
           <Card.Content>
             <Text style={styles.sectionTitle}>Answer Review</Text>
-            {attempt.user_answers.map((answer, index) => (
+            {userAnswers.map((answer, index) => (
               <View key={answer.id} style={styles.answerRow}>
                 <View style={[styles.answerIcon, { backgroundColor: answer.is_correct ? Colors.successLight : Colors.errorLight }]}>
                   <MaterialCommunityIcons name={answer.is_correct ? 'check' : 'close'} size={16} color={answer.is_correct ? Colors.success : Colors.error} />
