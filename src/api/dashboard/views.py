@@ -5,6 +5,7 @@ Provides a custom admin-like interface for moderation and monitoring.
 
 import csv
 import json
+import logging
 from datetime import timedelta
 
 from django.contrib import messages
@@ -26,8 +27,14 @@ from src.models import (
     QuestionReport,
 )
 
+logger = logging.getLogger(__name__)
+
 # PlatformStats uses singleton pattern with ID 1
 PLATFORM_STATS_SINGLETON_ID = 1
+
+# CSV export string length limits
+CSV_QUESTION_TEXT_LIMIT = 200
+CSV_SHORT_TEXT_LIMIT = 100
 
 
 @staff_member_required
@@ -465,26 +472,40 @@ def bulk_approve_contributions(request):
         messages.error(request, "No contributions selected.")
         return redirect("dashboard:contributions")
 
-    approved_count = 0
-    for contrib_id in contribution_ids:
+    # Convert to integers and filter valid IDs
+    valid_ids = []
+    for cid in contribution_ids:
         try:
-            contribution = Contribution.objects.get(pk=int(contrib_id))
-            if contribution.status == "PENDING":
-                contribution.approve_contribution()
+            valid_ids.append(int(cid))
+        except (ValueError, TypeError):
+            logger.warning("Invalid contribution ID: %s", cid)
 
-                # Create notification for contributor
-                Notification.objects.create(
-                    user=contribution.user,
-                    notification_type="CONTRIBUTION_APPROVED",
-                    title_en="Contribution Approved!",
-                    title_np="योगदान स्वीकृत भयो!",
-                    message_en="Your question has been approved.",
-                    message_np="तपाईंको प्रश्न स्वीकृत भएको छ।",
-                    related_question=contribution.question,
-                )
-                approved_count += 1
-        except Contribution.DoesNotExist:
-            continue
+    # Fetch all contributions in a single query
+    contributions = Contribution.objects.filter(
+        pk__in=valid_ids, status="PENDING"
+    ).select_related("user", "question")
+
+    approved_count = 0
+    notifications_to_create = []
+
+    for contribution in contributions:
+        contribution.approve_contribution()
+        notifications_to_create.append(
+            Notification(
+                user=contribution.user,
+                notification_type="CONTRIBUTION_APPROVED",
+                title_en="Contribution Approved!",
+                title_np="योगदान स्वीकृत भयो!",
+                message_en="Your question has been approved.",
+                message_np="तपाईंको प्रश्न स्वीकृत भएको छ।",
+                related_question=contribution.question,
+            )
+        )
+        approved_count += 1
+
+    # Bulk create notifications
+    if notifications_to_create:
+        Notification.objects.bulk_create(notifications_to_create)
 
     messages.success(request, f"{approved_count} contributions have been approved.")
     return redirect("dashboard:contributions")
@@ -503,26 +524,40 @@ def bulk_reject_contributions(request):
         messages.error(request, "No contributions selected.")
         return redirect("dashboard:contributions")
 
-    rejected_count = 0
-    for contrib_id in contribution_ids:
+    # Convert to integers
+    valid_ids = []
+    for cid in contribution_ids:
         try:
-            contribution = Contribution.objects.get(pk=int(contrib_id))
-            if contribution.status == "PENDING":
-                contribution.reject_contribution(rejection_reason)
+            valid_ids.append(int(cid))
+        except (ValueError, TypeError):
+            logger.warning("Invalid contribution ID: %s", cid)
 
-                # Notify contributor
-                Notification.objects.create(
-                    user=contribution.user,
-                    notification_type="GENERAL",
-                    title_en="Contribution Not Approved",
-                    title_np="योगदान स्वीकृत भएन",
-                    message_en=f"Your question was not approved. Reason: {rejection_reason}",
-                    message_np=f"तपाईंको प्रश्न स्वीकृत भएन। कारण: {rejection_reason}",
-                    related_question=contribution.question,
-                )
-                rejected_count += 1
-        except Contribution.DoesNotExist:
-            continue
+    # Fetch all contributions in a single query
+    contributions = Contribution.objects.filter(
+        pk__in=valid_ids, status="PENDING"
+    ).select_related("user", "question")
+
+    rejected_count = 0
+    notifications_to_create = []
+
+    for contribution in contributions:
+        contribution.reject_contribution(rejection_reason)
+        notifications_to_create.append(
+            Notification(
+                user=contribution.user,
+                notification_type="GENERAL",
+                title_en="Contribution Not Approved",
+                title_np="योगदान स्वीकृत भएन",
+                message_en=f"Your question was not approved. Reason: {rejection_reason}",
+                message_np=f"तपाईंको प्रश्न स्वीकृत भएन। कारण: {rejection_reason}",
+                related_question=contribution.question,
+            )
+        )
+        rejected_count += 1
+
+    # Bulk create notifications
+    if notifications_to_create:
+        Notification.objects.bulk_create(notifications_to_create)
 
     messages.warning(request, f"{rejected_count} contributions have been rejected.")
     return redirect("dashboard:contributions")
@@ -538,26 +573,40 @@ def bulk_make_public(request):
         messages.error(request, "No contributions selected.")
         return redirect("dashboard:contributions")
 
-    public_count = 0
-    for contrib_id in contribution_ids:
+    # Convert to integers
+    valid_ids = []
+    for cid in contribution_ids:
         try:
-            contribution = Contribution.objects.get(pk=int(contrib_id))
-            if contribution.status == "APPROVED":
-                contribution.make_public()
+            valid_ids.append(int(cid))
+        except (ValueError, TypeError):
+            logger.warning("Invalid contribution ID: %s", cid)
 
-                # Notify contributor
-                Notification.objects.create(
-                    user=contribution.user,
-                    notification_type="QUESTION_PUBLIC",
-                    title_en="Your Question is Now Public!",
-                    title_np="तपाईंको प्रश्न अब सार्वजनिक छ!",
-                    message_en="Congratulations! Your contributed question is now available.",
-                    message_np="बधाई छ! तपाईंको योगदान गरिएको प्रश्न अब उपलब्ध छ।",
-                    related_question=contribution.question,
-                )
-                public_count += 1
-        except Contribution.DoesNotExist:
-            continue
+    # Fetch all contributions in a single query
+    contributions = Contribution.objects.filter(
+        pk__in=valid_ids, status="APPROVED"
+    ).select_related("user", "question")
+
+    public_count = 0
+    notifications_to_create = []
+
+    for contribution in contributions:
+        contribution.make_public()
+        notifications_to_create.append(
+            Notification(
+                user=contribution.user,
+                notification_type="QUESTION_PUBLIC",
+                title_en="Your Question is Now Public!",
+                title_np="तपाईंको प्रश्न अब सार्वजनिक छ!",
+                message_en="Congratulations! Your contributed question is now available.",
+                message_np="बधाई छ! तपाईंको योगदान गरिएको प्रश्न अब उपलब्ध छ।",
+                related_question=contribution.question,
+            )
+        )
+        public_count += 1
+
+    # Bulk create notifications
+    if notifications_to_create:
+        Notification.objects.bulk_create(notifications_to_create)
 
     messages.success(request, f"{public_count} contributions have been made public.")
     return redirect("dashboard:contributions")
@@ -574,16 +623,24 @@ def bulk_resolve_reports(request):
         messages.error(request, "No reports selected.")
         return redirect("dashboard:reports")
 
-    resolved_count = 0
-    for report_id in report_ids:
+    # Convert to integers
+    valid_ids = []
+    for rid in report_ids:
         try:
-            report = QuestionReport.objects.get(pk=int(report_id))
-            if report.status != "RESOLVED":
-                report.resolve_report(request.user, admin_notes)
-                report.notify_creator()
-                resolved_count += 1
-        except QuestionReport.DoesNotExist:
-            continue
+            valid_ids.append(int(rid))
+        except (ValueError, TypeError):
+            logger.warning("Invalid report ID: %s", rid)
+
+    # Fetch all reports in a single query (excluding already resolved)
+    reports = QuestionReport.objects.filter(pk__in=valid_ids).exclude(
+        status="RESOLVED"
+    )
+
+    resolved_count = 0
+    for report in reports:
+        report.resolve_report(request.user, admin_notes)
+        report.notify_creator()
+        resolved_count += 1
 
     messages.success(request, f"{resolved_count} reports have been resolved.")
     return redirect("dashboard:reports")
@@ -599,17 +656,18 @@ def bulk_publish_questions(request):
         messages.error(request, "No questions selected.")
         return redirect("dashboard:questions")
 
-    published_count = 0
-    for question_id in question_ids:
+    # Convert to integers
+    valid_ids = []
+    for qid in question_ids:
         try:
-            question = Question.objects.get(pk=int(question_id))
-            if question.status != "PUBLIC":
-                question.status = "PUBLIC"
-                question.is_public = True
-                question.save(update_fields=["status", "is_public"])
-                published_count += 1
-        except Question.DoesNotExist:
-            continue
+            valid_ids.append(int(qid))
+        except (ValueError, TypeError):
+            logger.warning("Invalid question ID: %s", qid)
+
+    # Use bulk update for better performance
+    published_count = Question.objects.filter(pk__in=valid_ids).exclude(
+        status="PUBLIC"
+    ).update(status="PUBLIC", is_public=True)
 
     messages.success(request, f"{published_count} questions have been published.")
     return redirect("dashboard:questions")
@@ -671,7 +729,7 @@ def export_contributions_csv(request):
                 contrib.user.username,
                 contrib.user.email,
                 contrib.question.id,
-                contrib.question.question_text_en[:100],
+                contrib.question.question_text_en[:CSV_SHORT_TEXT_LIMIT],
                 contrib.question.category.name_en if contrib.question.category else "",
                 contrib.status,
                 contrib.contribution_month,
@@ -742,8 +800,8 @@ def export_questions_csv(request):
         writer.writerow(
             [
                 q.id,
-                q.question_text_en[:200],
-                q.question_text_np[:200],
+                q.question_text_en[:CSV_QUESTION_TEXT_LIMIT],
+                q.question_text_np[:CSV_QUESTION_TEXT_LIMIT],
                 q.category.name_en if q.category else "",
                 q.difficulty_level or "",
                 q.status,
@@ -802,9 +860,9 @@ def export_reports_csv(request):
             [
                 report.id,
                 report.question.id,
-                report.question.question_text_en[:100],
+                report.question.question_text_en[:CSV_SHORT_TEXT_LIMIT],
                 report.get_reason_display(),
-                report.description[:200],
+                report.description[:CSV_QUESTION_TEXT_LIMIT],
                 report.get_status_display(),
                 report.reported_by.username if report.reported_by else "Anonymous",
                 report.reviewed_by.username if report.reviewed_by else "",
