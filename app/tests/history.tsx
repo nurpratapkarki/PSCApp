@@ -37,7 +37,7 @@ const AttemptCard = ({ attempt, onPress }: { attempt: UserAttempt; onPress: () =
 
 export default function TestHistoryScreen() {
   const router = useRouter();
-  const { data: attempts, status } = usePaginatedApi<UserAttempt>('/api/my-attempts/');
+  const { data: attempts, status } = usePaginatedApi<UserAttempt>('/api/attempts/');
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

@@ -25,7 +25,7 @@ export default function ProfileSetupScreen() {
 
   const handleNext = () => {
     if (step === 'branch' && selectedBranch) {
-      if (selectedBranch.has_sub_branches && selectedBranch.sub_branches?.length > 0) {
+      if (selectedBranch.has_sub_branches && (selectedBranch.sub_branches?.length ?? 0) > 0) {
         setStep('subbranch');
       } else {
         setStep('complete');

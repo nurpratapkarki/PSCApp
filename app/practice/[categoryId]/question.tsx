@@ -52,7 +52,7 @@ const QuestionScreen = () => {
   };
 
   const handleSubmitAnswer = useCallback(() => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || !currentQuestion.answers) return;
     const correctAnswer = currentQuestion.answers.find((a) => a.is_correct);
     const isCorrect = selectedAnswer === correctAnswer?.id;
     setAnswers((prev) => [...prev, { questionId: currentQuestion.id, selectedAnswerId: selectedAnswer, isCorrect, correctAnswerId: correctAnswer?.id || 0 }]);
@@ -116,7 +116,7 @@ const QuestionScreen = () => {
           {currentQuestion.question_text_np && <Text style={styles.questionTextNp}>{currentQuestion.question_text_np}</Text>}
         </Card.Content></Card>
         <View style={styles.optionsContainer}>
-          {currentQuestion.answers.map((answer, idx) => (
+          {currentQuestion.answers?.map((answer, idx) => (
             <TouchableOpacity key={answer.id} onPress={() => handleSelectAnswer(answer.id)} disabled={showExplanation} activeOpacity={0.7}>
               <View style={getAnswerStyle(answer)}>
                 <View style={styles.optionLetter}><Text style={styles.optionLetterText}>{String.fromCharCode(65 + idx)}</Text></View>

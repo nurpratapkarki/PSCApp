@@ -185,7 +185,7 @@ const TestAttemptScreen = () => {
 
 
 
-        if (testData) setTimeLeft(testData.duration_minutes * 60);
+        if (testData && testData.duration_minutes) setTimeLeft(testData.duration_minutes * 60);
 
 
 
@@ -377,7 +377,7 @@ const TestAttemptScreen = () => {
 
 
 
-        if (testData && currentQuestionIndex < testData.test_questions.length - 1) {
+        if (testData && testData.test_questions && currentQuestionIndex < testData.test_questions.length - 1) {
 
 
 
@@ -485,7 +485,7 @@ const TestAttemptScreen = () => {
 
 
 
-    const currentQuestionData = testData.test_questions[currentQuestionIndex]?.question;
+    const currentQuestionData = testData.test_questions?.[currentQuestionIndex]?.question;
 
 
 
@@ -501,7 +501,7 @@ const TestAttemptScreen = () => {
 
 
 
-    const questionProgress = (currentQuestionIndex + 1) / testData.test_questions.length;
+    const questionProgress = testData.test_questions ? (currentQuestionIndex + 1) / testData.test_questions.length : 0;
 
 
 
@@ -529,7 +529,7 @@ const TestAttemptScreen = () => {
 
 
 
-                <Text>Q {currentQuestionIndex + 1}/{testData.test_questions.length}</Text>
+                <Text>Q {currentQuestionIndex + 1}/{testData.test_questions?.length || 0}</Text>
 
 
 
@@ -585,7 +585,7 @@ const TestAttemptScreen = () => {
 
 
 
-                            {currentQuestionData.answers.map(option => (
+                            {currentQuestionData.answers?.map(option => (
 
 
 
@@ -625,7 +625,7 @@ const TestAttemptScreen = () => {
 
 
 
-                <Button onPress={handleNext} disabled={currentQuestionIndex === testData.test_questions.length - 1}>Next</Button>
+                <Button onPress={handleNext} disabled={currentQuestionIndex === (testData.test_questions?.length || 0) - 1}>Next</Button>
 
 
 

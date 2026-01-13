@@ -7,7 +7,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useApi } from '../../../hooks/useApi';
 import { usePaginatedApi } from '../../../hooks/usePaginatedApi';
 import { StudyCollection } from '../../../types/contribution.types';
-import { Question } from '../../../types/question.types';
+import { Question, DifficultyLevel } from '../../../types/question.types';
 import { Colors } from '../../../constants/colors';
 import { Spacing, BorderRadius } from '../../../constants/typography';
 
@@ -20,7 +20,7 @@ interface QuestionItemProps {
 const QuestionItem: React.FC<QuestionItemProps> = ({ question, onPress, onRemove }) => {
   const [menuVisible, setMenuVisible] = useState(false);
 
-  const getDifficultyColor = (difficulty: string) => {
+  const getDifficultyColor = (difficulty: DifficultyLevel | null | undefined): string => {
     switch (difficulty?.toUpperCase()) {
       case 'EASY': return Colors.success;
       case 'MEDIUM': return Colors.warning;
@@ -43,9 +43,9 @@ const QuestionItem: React.FC<QuestionItemProps> = ({ question, onPress, onRemove
                 style={[styles.difficultyChip, { backgroundColor: getDifficultyColor(question.difficulty_level) + '20' }]}
                 textStyle={{ color: getDifficultyColor(question.difficulty_level), fontSize: 10 }}
               >
-                {question.difficulty_level}
+                {question.difficulty_level || 'MEDIUM'}
               </Chip>
-              <Text style={styles.categoryText}>{question.category_name}</Text>
+              <Text style={styles.categoryText}>{question.category_name || ''}</Text>
             </View>
           </View>
           <Menu

@@ -4,9 +4,11 @@ import { apiRequest, buildQuery } from "./client";
 import type { PaginatedResponse } from "../../types/api.types";
 import type {
 	MockTest,
+	MockTestDetail,
 	UserAttempt,
 	UserAnswer,
 	UserAnswerCreatePayload,
+	UserAnswerSubmit,
 	StartAttemptRequest,
 	TimeConfiguration,
 } from "../../types/test.types";
@@ -37,7 +39,17 @@ export async function getMockTest(
 	id: number,
 	token?: string | null,
 ): Promise<MockTest> {
-	return apiRequest<MockTest>(`${API_ENDPOINTS.mockTests.list}${id}/`, {
+	return apiRequest<MockTest>(API_ENDPOINTS.mockTests.detail(id), {
+		token: token ?? undefined,
+	});
+}
+
+// Get mock test with full question details
+export async function getMockTestDetail(
+	id: number,
+	token?: string | null,
+): Promise<MockTestDetail> {
+	return apiRequest<MockTestDetail>(API_ENDPOINTS.mockTests.detail(id), {
 		token: token ?? undefined,
 	});
 }
@@ -79,11 +91,23 @@ export async function listAttempts(
 	);
 }
 
+// List current user's attempts
+export async function listMyAttempts(
+	params: AttemptListParams = {},
+	token?: string | null,
+): Promise<PaginatedResponse<UserAttempt>> {
+	const query = buildQuery(params);
+	return apiRequest<PaginatedResponse<UserAttempt>>(
+		`${API_ENDPOINTS.attempts.myAttempts}${query}`,
+		{ token: token ?? undefined },
+	);
+}
+
 export async function getAttempt(
 	id: number,
 	token?: string | null,
 ): Promise<UserAttempt> {
-	return apiRequest<UserAttempt>(`${API_ENDPOINTS.attempts.list}${id}/`, {
+	return apiRequest<UserAttempt>(API_ENDPOINTS.attempts.detail(id), {
 		token: token ?? undefined,
 	});
 }
@@ -122,7 +146,7 @@ export async function getAttemptResults(
 // ---- Answers ----
 
 export async function createUserAnswer(
-	payload: UserAnswerCreatePayload,
+	payload: UserAnswerCreatePayload | UserAnswerSubmit,
 	token?: string | null,
 ): Promise<UserAnswer> {
 	return apiRequest<UserAnswer>(API_ENDPOINTS.answers.list, {
