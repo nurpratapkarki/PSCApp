@@ -70,10 +70,15 @@ export interface UserStatistics {
   questions_answered: number;
   correct_answers: number;
   total_correct_answers: number;
+  questions_correct?: number; // Alias for compatibility
   accuracy_percentage: number;
   mock_tests_completed: number;
+  tests_attempted?: number;
+  tests_passed?: number;
   study_streak_days: number;
   longest_streak: number;
+  total_study_time?: number; // in seconds
+  featured_contributions?: number;
   last_activity_date: string | null; // ISO date
   badges_earned: BadgesEarned;
   contribution_rank: number | null;

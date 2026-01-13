@@ -11,6 +11,7 @@ export interface UserProfile {
   preferred_language: LanguageCode;
   target_branch: number | null;
   target_sub_branch: number | null;
+  branch?: number | null; // Alias for target_branch
   branch_name?: string;
   sub_branch_name?: string;
   experience_points: number;
