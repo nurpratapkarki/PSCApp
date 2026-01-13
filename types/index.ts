@@ -5,3 +5,4 @@ export * from "./user.types";
 export * from "./category.types";
 export * from "./contribution.types";
 export * from "./api.types";
+export * from "./leaderboard.types";

@@ -56,7 +56,7 @@ export default function ContributionDashboardScreen() {
         <Card style={styles.heroCard}>
           <Card.Content style={styles.heroContent}>
             <MaterialCommunityIcons name="hand-heart" size={48} color={Colors.primary} />
-            <Text style={styles.heroTitle}>Help Build Nepal's Largest PSC Question Bank</Text>
+            <Text style={styles.heroTitle}>Help Build Nepal&apos;s Largest PSC Question Bank</Text>
             <Text style={styles.heroSubtitle}>Your contributions help thousands of aspirants prepare for their exams</Text>
           </Card.Content>
         </Card>

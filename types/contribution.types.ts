@@ -107,6 +107,18 @@ export interface PlatformStats {
   last_updated: string; // ISO timestamp
 }
 
+// Alias for compatibility with community stats screen
+export interface PlatformStatistics {
+  total_users: number;
+  total_questions: number;
+  total_mock_tests: number;
+  total_categories: number;
+  total_branches: number;
+  active_users_today: number;
+  questions_added_today: number;
+  tests_taken_today: number;
+}
+
 export interface AppSetting {
   setting_key: string;
   setting_value: string;

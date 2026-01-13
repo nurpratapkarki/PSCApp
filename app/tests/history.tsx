@@ -59,7 +59,7 @@ export default function TestHistoryScreen() {
         <View style={styles.emptyContainer}>
           <MaterialCommunityIcons name="clipboard-text-clock" size={80} color={Colors.textTertiary} />
           <Text style={styles.emptyTitle}>No Test History</Text>
-          <Text style={styles.emptySubtitle}>You haven't attempted any tests yet</Text>
+          <Text style={styles.emptySubtitle}>You haven&apos;t attempted any tests yet</Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
