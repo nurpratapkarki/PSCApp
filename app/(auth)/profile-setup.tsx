@@ -171,7 +171,7 @@ export default function ProfileSetupScreen() {
       <View style={styles.successIcon}>
         <MaterialCommunityIcons name="check-circle" size={80} color={Colors.success} />
       </View>
-      <Text style={styles.completeTitle}>You're All Set!</Text>
+      <Text style={styles.completeTitle}>You&apos;re All Set!</Text>
       <Text style={styles.completeSubtitle}>तपाईंको प्रोफाइल तयार छ!</Text>
 
       <View style={styles.summaryCard}>

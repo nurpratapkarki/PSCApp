@@ -30,6 +30,7 @@ export interface MockTest {
   branch_name: string;
   sub_branch: number | null;
   total_questions: number;
+  total_marks?: number; // Optional: total marks for the test
   duration_minutes: number;
   use_standard_duration: boolean;
   pass_percentage: number;

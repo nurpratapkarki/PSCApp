@@ -34,7 +34,7 @@ export default function ProfileStatisticsScreen() {
     );
   }
 
-  const accuracy = stats?.questions_answered ? Math.round((stats.questions_correct / stats.questions_answered) * 100) : 0;
+  const accuracy = stats?.questions_answered ? Math.round(((stats.questions_correct || 0) / stats.questions_answered) * 100) : 0;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -98,7 +98,7 @@ export default function ProfileStatisticsScreen() {
               </View>
               <View style={styles.testDivider} />
               <View style={styles.testItem}>
-                <Text style={[styles.testValue, { color: Colors.success }]}>{stats?.tests_attempted ? Math.round((stats.tests_passed / stats.tests_attempted) * 100) : 0}%</Text>
+                <Text style={[styles.testValue, { color: Colors.success }]}>{stats?.tests_attempted ? Math.round(((stats.tests_passed || 0) / stats.tests_attempted) * 100) : 0}%</Text>
                 <Text style={styles.testLabel}>Pass Rate</Text>
               </View>
             </View>

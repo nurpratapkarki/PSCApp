@@ -35,7 +35,7 @@ export interface DailyActivity {
   created_at: string; // ISO timestamp
 }
 
-export type LeaderboardTimePeriod = "WEEKLY" | "MONTHLY" | "ALL_TIME" | string;
+export type LeaderboardTimePeriod = "WEEKLY" | "MONTHLY" | "ALL_TIME";
 
 export interface LeaderboardEntry {
   rank: number;
@@ -46,7 +46,7 @@ export interface LeaderboardEntry {
   tests_completed: number;
   accuracy_percentage: number;
   time_period: LeaderboardTimePeriod;
-  branch: number;
+  branch: number | null;
   sub_branch: number | null;
 }
 
@@ -70,10 +70,15 @@ export interface UserStatistics {
   questions_answered: number;
   correct_answers: number;
   total_correct_answers: number;
+  questions_correct?: number; // Alias for compatibility
   accuracy_percentage: number;
   mock_tests_completed: number;
+  tests_attempted?: number;
+  tests_passed?: number;
   study_streak_days: number;
   longest_streak: number;
+  total_study_time?: number; // in seconds
+  featured_contributions?: number;
   last_activity_date: string | null; // ISO date
   badges_earned: BadgesEarned;
   contribution_rank: number | null;
@@ -105,6 +110,18 @@ export interface PlatformStats {
   most_attempted_category: number | null;
   most_attempted_category_name: string | null;
   last_updated: string; // ISO timestamp
+}
+
+// Alias for compatibility with community stats screen
+export interface PlatformStatistics {
+  total_users: number;
+  total_questions: number;
+  total_mock_tests: number;
+  total_categories: number;
+  total_branches: number;
+  active_users_today: number;
+  questions_added_today: number;
+  tests_taken_today: number;
 }
 
 export interface AppSetting {
