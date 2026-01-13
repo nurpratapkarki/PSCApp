@@ -24,12 +24,15 @@ from src.models import (
     QuestionReport,
 )
 
+# PlatformStats uses singleton pattern with ID 1
+PLATFORM_STATS_SINGLETON_ID = 1
+
 
 @staff_member_required
 def dashboard_index(request):
     """Main dashboard view with platform statistics and recent activity."""
-    # Get or create platform stats
-    stats, _ = PlatformStats.objects.get_or_create(id=1)
+    # Get or create platform stats (singleton pattern)
+    stats, _ = PlatformStats.objects.get_or_create(id=PLATFORM_STATS_SINGLETON_ID)
 
     # Recent contributions
     recent_contributions = Contribution.objects.select_related(

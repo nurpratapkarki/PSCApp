@@ -102,9 +102,8 @@ def handle_contribution_save(sender, instance, created, **kwargs):
     if not user:
         return
 
-    try:
-        profile = user.profile
-    except Exception:
+    profile = getattr(user, "profile", None)
+    if not profile:
         return
 
     # Update total contributions count if it's a new valid contribution
