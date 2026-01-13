@@ -1,6 +1,10 @@
+import logging
+
 from django.db import models
 
 from src.models.user import User
+
+logger = logging.getLogger(__name__)
 
 
 class Notification(models.Model):
@@ -128,8 +132,8 @@ class Notification(models.Model):
                 group_name, {"type": "send_notification", "data": data}
             )
         except Exception as e:
-            # Fallback or log error, don't crash main thread
-            print(f"Failed to send realtime notification: {e}")
+            # Log error, don't crash main thread
+            logger.warning("Failed to send realtime notification: %s", e)
 
     @staticmethod
     def get_unread_count(user):
