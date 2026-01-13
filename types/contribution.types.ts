@@ -35,7 +35,7 @@ export interface DailyActivity {
   created_at: string; // ISO timestamp
 }
 
-export type LeaderboardTimePeriod = "WEEKLY" | "MONTHLY" | "ALL_TIME" | string;
+export type LeaderboardTimePeriod = "WEEKLY" | "MONTHLY" | "ALL_TIME";
 
 export interface LeaderboardEntry {
   rank: number;
@@ -46,7 +46,7 @@ export interface LeaderboardEntry {
   tests_completed: number;
   accuracy_percentage: number;
   time_period: LeaderboardTimePeriod;
-  branch: number;
+  branch: number | null;
   sub_branch: number | null;
 }
 

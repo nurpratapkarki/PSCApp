@@ -88,7 +88,7 @@ export default function CollectionsScreen() {
   const { data: collections, status, refetch } = usePaginatedApi<StudyCollection>('/api/collections/');
 
   const handleCollectionPress = (collection: StudyCollection) => {
-    router.push(`/profile/${collection.id}`);
+    router.push(`/profile/${collection.id}` as any);
   };
 
   const handleMenuPress = (collectionId: number, action: string) => {

@@ -1,13 +1,13 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Card, Text, ActivityIndicator, Button, Chip, Divider } from 'react-native-paper';
+import { Text, ActivityIndicator, Button, Chip, Divider } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { usePaginatedApi } from '../../hooks/usePaginatedApi';
 import { Notification } from '../../types/contribution.types';
 import { Colors } from '../../constants/colors';
-import { Spacing, BorderRadius } from '../../constants/typography';
+import { Spacing } from '../../constants/typography';
 
 type NotificationCategory = 'ALL' | 'UNREAD' | 'SYSTEM' | 'ACHIEVEMENT';
 
@@ -100,7 +100,7 @@ export default function NotificationsScreen() {
   
   const { data: notifications, status, refetch } = usePaginatedApi<Notification>('/api/notifications/');
 
-  const filteredNotifications = React.useMemo(() => {
+  const filteredNotifications = useMemo(() => {
     if (!notifications) return [];
     switch (category) {
       case 'UNREAD':
