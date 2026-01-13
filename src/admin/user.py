@@ -1,48 +1,31 @@
 from django.contrib import admin
+from django.contrib.auth.admin import GroupAdmin as BaseGroupAdmin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group, User
 from django.utils.html import format_html
 
-from src.admin.custom_admin import CustomAdmin
 from src.models.user import UserProfile
 
-# Register default User and Group models with CustomAdmin
+# Unregister and re-register with enhanced admin
 admin.site.unregister(User)
 admin.site.unregister(Group)
 
 
-@admin.register(User, site=CustomAdmin)
-class UserAdmin(admin.ModelAdmin):
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
     list_display = ("username", "email", "first_name", "last_name", "is_staff")
     search_fields = ("username", "email", "first_name", "last_name")
     list_filter = ("is_staff", "is_superuser", "is_active")
     list_per_page = 50
 
-    fieldsets = (
-        (None, {"fields": ("username", "password")}),
-        ("Personal info", {"fields": ("first_name", "last_name", "email")}),
-        (
-            "Permissions",
-            {
-                "fields": (
-                    "is_active",
-                    "is_staff",
-                    "is_superuser",
-                    "groups",
-                    "user_permissions",
-                )
-            },
-        ),
-        ("Important dates", {"fields": ("last_login", "date_joined")}),
-    )
 
-
-@admin.register(Group, site=CustomAdmin)
-class GroupAdmin(admin.ModelAdmin):
+@admin.register(Group)
+class GroupAdmin(BaseGroupAdmin):
     list_display = ("name",)
     search_fields = ("name",)
 
 
-@admin.register(UserProfile, site=CustomAdmin)
+@admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = (
         "profile_picture_tag",

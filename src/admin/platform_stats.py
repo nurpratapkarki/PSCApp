@@ -1,10 +1,9 @@
 from django.contrib import admin
 
-from src.admin.custom_admin import CustomAdmin
 from src.models.platform_stats import PlatformStats
 
 
-@admin.register(PlatformStats, site=CustomAdmin)
+@admin.register(PlatformStats)
 class PlatformStatsAdmin(admin.ModelAdmin):
     list_display = (
         "last_updated",

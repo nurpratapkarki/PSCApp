@@ -1,10 +1,9 @@
 from django.contrib import admin
 
-from src.admin.custom_admin import CustomAdmin
 from src.models.analytics import Contribution, DailyActivity, LeaderBoard
 
 
-@admin.register(Contribution, site=CustomAdmin)
+@admin.register(Contribution)
 class ContributionAdmin(admin.ModelAdmin):
     list_display = (
         "user",
@@ -54,7 +53,7 @@ class ContributionAdmin(admin.ModelAdmin):
         self.message_user(request, f"{queryset.count()} contributions made public.")
 
 
-@admin.register(LeaderBoard, site=CustomAdmin)
+@admin.register(LeaderBoard)
 class LeaderBoardAdmin(admin.ModelAdmin):
     list_display = (
         "rank",
@@ -98,7 +97,7 @@ class LeaderBoardAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(DailyActivity, site=CustomAdmin)
+@admin.register(DailyActivity)
 class DailyActivityAdmin(admin.ModelAdmin):
     list_display = (
         "date",

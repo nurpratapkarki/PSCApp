@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from src.admin.custom_admin import CustomAdmin
 from src.models.question_answer import Answer, Question, QuestionReport
 
 
@@ -11,7 +10,7 @@ class AnswerInline(admin.TabularInline):
     max_num = 4
 
 
-@admin.register(Question, site=CustomAdmin)
+@admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     list_display = (
         "short_question",
@@ -110,7 +109,7 @@ class QuestionAdmin(admin.ModelAdmin):
         self.message_user(request, f"{updated} questions marked as draft.")
 
 
-@admin.register(QuestionReport, site=CustomAdmin)
+@admin.register(QuestionReport)
 class QuestionReportAdmin(admin.ModelAdmin):
     list_display = (
         "question_link",
