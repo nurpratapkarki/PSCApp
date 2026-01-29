@@ -1,4 +1,5 @@
 import { API_BASE_URL, API_ENDPOINTS } from "../../config/api.config";
+import { useAuthStore } from "../../store/authStore";
 
 export class ApiError extends Error {
   status: number;
@@ -22,59 +23,36 @@ export interface RequestOptions {
   isFormData?: boolean;
 }
 
-// Token storage keys (used for AsyncStorage in production)
+// Token storage keys
 export const ACCESS_TOKEN_KEY = "access_token";
 export const REFRESH_TOKEN_KEY = "refresh_token";
 
 /**
- * Token storage implementation.
- * 
- * NOTE: This implementation uses in-memory storage which will lose tokens on app restart.
- * For production, implement persistent storage using:
- * - @react-native-async-storage/async-storage for general storage
- * - expo-secure-store for secure credential storage
- * 
- * Example production implementation:
- * ```
- * import * as SecureStore from 'expo-secure-store';
- * 
- * export async function setTokens(access: string, refresh?: string) {
- *   await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, access);
- *   if (refresh) await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, refresh);
- * }
- * ```
+ * Token management functions using Zustand store with AsyncStorage persistence.
+ * Tokens are automatically persisted via the authStore.
  */
-let accessToken: string | null = null;
-let refreshToken: string | null = null;
 
-// Token management functions
+// Token management functions - now using Zustand store
 export function setTokens(access: string, refresh?: string) {
-  accessToken = access;
-  if (refresh) {
-    refreshToken = refresh;
-  }
-  // TODO: Persist to AsyncStorage/SecureStore for production
+  useAuthStore.getState().setTokens(access, refresh);
 }
 
 export function getAccessToken(): string | null {
-  // TODO: Read from AsyncStorage/SecureStore for production
-  return accessToken;
+  return useAuthStore.getState().accessToken;
 }
 
 export function getRefreshToken(): string | null {
-  // TODO: Read from AsyncStorage/SecureStore for production
-  return refreshToken;
+  return useAuthStore.getState().refreshToken;
 }
 
 export function clearTokens() {
-  accessToken = null;
-  refreshToken = null;
-  // TODO: Clear from AsyncStorage/SecureStore for production
+  useAuthStore.getState().clearAuth();
 }
 
 // Token refresh function
 async function refreshAccessToken(): Promise<string | null> {
-  if (!refreshToken) {
+  const currentRefreshToken = getRefreshToken();
+  if (!currentRefreshToken) {
     return null;
   }
 
@@ -86,7 +64,7 @@ async function refreshAccessToken(): Promise<string | null> {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ refresh: refreshToken }),
+      body: JSON.stringify({ refresh: currentRefreshToken }),
     });
 
     if (!response.ok) {
@@ -121,7 +99,7 @@ export async function apiRequest<T>(
   };
 
   // Use provided token or fall back to stored access token
-  const authToken = token ?? accessToken;
+  const authToken = token ?? getAccessToken();
   if (authToken) {
     finalHeaders.Authorization = `Bearer ${authToken}`;
   }
@@ -143,7 +121,7 @@ export async function apiRequest<T>(
   });
 
   // Handle token refresh on 401
-  if (response.status === 401 && !token && refreshToken) {
+  if (response.status === 401 && !token && getRefreshToken()) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       finalHeaders.Authorization = `Bearer ${newToken}`;
@@ -185,7 +163,7 @@ export async function uploadFile<T>(
     Accept: "application/json",
   };
 
-  const authToken = token ?? accessToken;
+  const authToken = token ?? getAccessToken();
   if (authToken) {
     headers.Authorization = `Bearer ${authToken}`;
   }
@@ -198,7 +176,7 @@ export async function uploadFile<T>(
   });
 
   // Handle token refresh on 401
-  if (response.status === 401 && !token && refreshToken) {
+  if (response.status === 401 && !token && getRefreshToken()) {
     const newToken = await refreshAccessToken();
     if (newToken) {
       headers.Authorization = `Bearer ${newToken}`;

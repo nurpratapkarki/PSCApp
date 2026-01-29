@@ -1,185 +1,155 @@
-import { useState, useCallback, useEffect } from 'react';
-import { 
-  setTokens, 
-  clearTokens, 
-  getAccessToken,
-  getRefreshToken 
+import { useCallback, useState } from 'react';
+import { useAuthStore } from '../store/authStore';
+import {
+  clearTokens
 } from '../services/api/client';
-import { 
-  login as apiLogin, 
-  googleLogin as apiGoogleLogin, 
+import {
+  login as apiLogin,
+  googleLogin as apiGoogleLogin,
   logout as apiLogout,
   devLogin as apiDevLogin,
+  regularLogin as apiRegularLogin,
 } from '../services/api/auth';
 import { getCurrentUserProfile } from '../services/api/profile';
-import type { UserProfile } from '../types/user.types';
-import type { 
-  LoginRequest, 
-  GoogleLoginRequest, 
-  TokenResponse 
+import type {
+  LoginRequest,
+  GoogleLoginRequest,
+  TokenResponse
 } from '../types/auth.types';
 
-interface AuthState {
-  user: UserProfile | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-}
-
 export function useAuth() {
-  const [state, setState] = useState<AuthState>({
-    user: null,
-    isAuthenticated: false,
-    isLoading: true,
-    error: null,
-  });
+  const [error, setError] = useState<string | null>(null);
 
-  // Check authentication status on mount
+  // Get state from Zustand store
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  const isHydrated = useAuthStore((state) => state.isHydrated);
+  const accessToken = useAuthStore((state) => state.accessToken);
+
+  // Get actions from store
+  const setAuth = useAuthStore((state) => state.setAuth);
+  const setUser = useAuthStore((state) => state.setUser);
+  const setLoading = useAuthStore((state) => state.setLoading);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+
+  // Check authentication status
   const checkAuth = useCallback(async () => {
-    const token = getAccessToken();
-    if (!token) {
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      });
+    if (!accessToken) {
+      setLoading(false);
       return;
     }
 
     try {
-      const profile = await getCurrentUserProfile(token);
-      setState({
-        user: profile,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
+      const profile = await getCurrentUserProfile(accessToken);
+      setUser(profile);
+      setLoading(false);
     } catch {
-      clearTokens();
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-      });
+      clearAuth();
     }
-  }, []);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  }, [accessToken, setLoading, setUser, clearAuth]);
 
   // Login with email and password
   const login = useCallback(async (credentials: LoginRequest): Promise<TokenResponse> => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    setLoading(true);
+    setError(null);
     try {
       const response = await apiLogin(credentials);
       const profile = await getCurrentUserProfile(response.access);
-      setState({
-        user: profile,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
+      setAuth(profile, response);
       return response;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
+      setError(errorMessage);
+      setLoading(false);
       throw err;
     }
-  }, []);
+  }, [setAuth, setLoading]);
 
   // Login with Google OAuth
   const googleLogin = useCallback(async (token: GoogleLoginRequest): Promise<TokenResponse> => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    setLoading(true);
+    setError(null);
     try {
       const response = await apiGoogleLogin(token);
       const profile = await getCurrentUserProfile(response.access);
-      setState({
-        user: profile,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
+      setAuth(profile, response);
       return response;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Google login failed';
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
+      setError(errorMessage);
+      setLoading(false);
       throw err;
     }
-  }, []);
+  }, [setAuth, setLoading]);
 
   // Dev login (for development only)
   const devLogin = useCallback(async (email: string, password?: string) => {
-    setState(prev => ({ ...prev, isLoading: true, error: null }));
+    setLoading(true);
+    setError(null);
     try {
       const response = await apiDevLogin(email, password);
       const profile = await getCurrentUserProfile(response.access);
-      setState({
-        user: profile,
-        isAuthenticated: true,
-        isLoading: false,
-        error: null,
-      });
+      setAuth(profile, { access: response.access, refresh: response.refresh });
       return response;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Dev login failed';
-      setState(prev => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
+      setError(errorMessage);
+      setLoading(false);
       throw err;
     }
-  }, []);
+  }, [setAuth, setLoading]);
+
+  // Regular login for users who signed up with username/password
+  const regularLogin = useCallback(async (email: string, password: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiRegularLogin(email, password);
+      const profile = await getCurrentUserProfile(response.access);
+      setAuth(profile, { access: response.access, refresh: response.refresh });
+      return response;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      setError(errorMessage);
+      setLoading(false);
+      throw err;
+    }
+  }, [setAuth, setLoading]);
 
   // Logout
   const logout = useCallback(async () => {
-    setState(prev => ({ ...prev, isLoading: true }));
+    setLoading(true);
     try {
       await apiLogout();
     } catch {
       // Ignore logout errors, just clear local state
     }
     clearTokens();
-    setState({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      error: null,
-    });
   }, []);
 
   // Refresh user profile
   const refreshUser = useCallback(async () => {
-    const token = getAccessToken();
-    if (!token) return;
+    if (!accessToken) return;
 
     try {
-      const profile = await getCurrentUserProfile(token);
-      setState(prev => ({
-        ...prev,
-        user: profile,
-      }));
+      const profile = await getCurrentUserProfile(accessToken);
+      setUser(profile);
     } catch {
       // Ignore refresh errors
     }
-  }, []);
+  }, [accessToken, setUser]);
 
   return {
-    ...state,
+    user,
+    isAuthenticated,
+    isLoading,
+    isHydrated,
+    error,
     login,
     googleLogin,
     devLogin,
+    regularLogin,
     logout,
     refreshUser,
     checkAuth,

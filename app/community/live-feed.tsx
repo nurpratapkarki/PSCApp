@@ -64,7 +64,8 @@ const ActivityCard = ({ activity }: { activity: ActivityItem }) => {
 
 export default function LiveFeedScreen() {
   const router = useRouter();
-  const { data: activities, status, refetch } = usePaginatedApi<ActivityItem>('/api/activity-feed/');
+  // Using the correct API endpoint - /api/daily-activity/ is the backend endpoint
+  const { data: activities, status, refetch } = usePaginatedApi<ActivityItem>('/api/daily-activity/');
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

@@ -49,14 +49,14 @@ export default function RootLayout() {
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="practice" options={{ headerShown: true, title: "Practice" }} />
-          <Stack.Screen name="tests" options={{ headerShown: true, title: "Tests" }} />
-          <Stack.Screen name="contribute" options={{ headerShown: true, title: "Contribute" }} />
-          <Stack.Screen name="notifications" options={{ headerShown: true, title: "Notifications" }} />
-          <Stack.Screen name="profile" options={{ headerShown: true, title: "Profile" }} />
-          <Stack.Screen name="community" options={{ headerShown: true, title: "Community" }} />
-          <Stack.Screen name="report" options={{ headerShown: true, title: "Report" }} />
-          <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+          <Stack.Screen name="practice" options={{ headerShown: false }} />
+          <Stack.Screen name="tests" options={{ headerShown: false }} />
+          <Stack.Screen name="contribute" options={{ headerShown: false }} />
+          <Stack.Screen name="notifications" options={{ headerShown: false }} />
+          <Stack.Screen name="profile" options={{ headerShown: false }} />
+          <Stack.Screen name="community" options={{ headerShown: false }} />
+          <Stack.Screen name="report" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: "modal", headerShown: false }} />
         </Stack>
       </PaperProvider>
     </SafeAreaProvider>

@@ -1,23 +1,59 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, Card, Avatar, Chip, ActivityIndicator, SegmentedButtons } from 'react-native-paper';
+import React, { useState, useMemo } from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
+import { Text, Card, Avatar, ActivityIndicator, SegmentedButtons } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useApi } from '../../hooks/useApi';
 import { Colors } from '../../constants/colors';
 import { Spacing, BorderRadius } from '../../constants/typography';
 
+// API response structure from backend
+interface LeaderboardApiEntry {
+  rank: number;
+  previous_rank: number | null;
+  user_name: string | null;
+  profile_picture: string | null;
+  total_score: string;
+  tests_completed: number;
+  accuracy_percentage: string;
+  time_period: string;
+  branch: number;
+  sub_branch: number | null;
+}
+
+// Transformed structure for UI display
 interface LeaderboardEntry {
   rank: number;
-  user: { id: number; username: string; full_name: string; avatar_url?: string };
+  userName: string;
+  profilePicture: string | null;
   score: number;
-  questions_answered: number;
+  testsCompleted: number;
   accuracy: number;
+}
+
+// Transform API response to UI format
+function transformLeaderboardData(apiData: LeaderboardApiEntry[] | null): LeaderboardEntry[] {
+  if (!apiData || !Array.isArray(apiData)) return [];
+
+  return apiData
+    .map((entry, index) => ({
+      rank: entry.rank || index + 1,
+      userName: entry.user_name || `User ${index + 1}`,
+      profilePicture: entry.profile_picture,
+      score: parseFloat(entry.total_score) || 0,
+      testsCompleted: entry.tests_completed || 0,
+      accuracy: parseFloat(entry.accuracy_percentage) || 0,
+    }))
+    .sort((a, b) => b.score - a.score) // Sort by score descending
+    .map((entry, index) => ({ ...entry, rank: index + 1 })); // Reassign ranks
 }
 
 export default function LeaderboardScreen() {
   const [period, setPeriod] = useState<'weekly' | 'monthly' | 'all_time'>('weekly');
-  const { data: leaderboard, status } = useApi<LeaderboardEntry[]>(`/api/leaderboard/?period=${period}`);
+  const { data: rawLeaderboard, status } = useApi<LeaderboardApiEntry[]>(`/api/leaderboard/?period=${period}`);
+
+  // Transform the raw API data to UI format
+  const leaderboard = useMemo(() => transformLeaderboardData(rawLeaderboard), [rawLeaderboard]);
 
   const getMedalColor = (rank: number) => {
     if (rank === 1) return '#FFD700';
@@ -31,8 +67,8 @@ export default function LeaderboardScreen() {
       <View style={[styles.medalBadge, { backgroundColor: getMedalColor(entry.rank) }]}>
         <Text style={styles.medalText}>{entry.rank}</Text>
       </View>
-      <Avatar.Text size={position === 1 ? 64 : 52} label={entry.user.full_name.substring(0, 2).toUpperCase()} style={{ backgroundColor: Colors.primary }} />
-      <Text style={styles.topName} numberOfLines={1}>{entry.user.full_name}</Text>
+      <Avatar.Text size={position === 1 ? 64 : 52} label={entry.userName.substring(0, 2).toUpperCase()} style={{ backgroundColor: Colors.primary }} />
+      <Text style={styles.topName} numberOfLines={1}>{entry.userName}</Text>
       <Text style={styles.topScore}>{entry.score.toLocaleString()} pts</Text>
       <View style={styles.topStats}>
         <Text style={styles.topStatText}>{entry.accuracy.toFixed(0)}% accuracy</Text>
@@ -44,10 +80,10 @@ export default function LeaderboardScreen() {
     <Card style={styles.rowCard}>
       <Card.Content style={styles.rowContent}>
         <Text style={styles.rankText}>{entry.rank}</Text>
-        <Avatar.Text size={40} label={entry.user.full_name.substring(0, 2).toUpperCase()} style={{ backgroundColor: Colors.secondary }} />
+        <Avatar.Text size={40} label={entry.userName.substring(0, 2).toUpperCase()} style={{ backgroundColor: Colors.secondary }} />
         <View style={styles.rowInfo}>
-          <Text style={styles.rowName}>{entry.user.full_name}</Text>
-          <Text style={styles.rowSubtext}>{entry.questions_answered} questions • {entry.accuracy.toFixed(0)}%</Text>
+          <Text style={styles.rowName}>{entry.userName}</Text>
+          <Text style={styles.rowSubtext}>{entry.testsCompleted} tests • {entry.accuracy.toFixed(0)}%</Text>
         </View>
         <Text style={styles.rowScore}>{entry.score.toLocaleString()}</Text>
       </Card.Content>
@@ -91,8 +127,8 @@ export default function LeaderboardScreen() {
 
           {/* Rest of leaderboard */}
           <View style={styles.listContainer}>
-            {leaderboard?.slice(3).map((entry) => (
-              <LeaderboardRow key={entry.user.id} entry={entry} />
+            {leaderboard?.slice(3).map((entry, index) => (
+              <LeaderboardRow key={`${entry.rank}-${index}`} entry={entry} />
             ))}
           </View>
 

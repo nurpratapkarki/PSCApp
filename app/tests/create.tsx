@@ -63,9 +63,9 @@ const CreateTestScreen = () => {
             <Text style={styles.inputLabel}>Select Branch</Text>
             {branchStatus === 'loading' ? (
               <ActivityIndicator size="small" color={Colors.primary} style={styles.loader} />
-            ) : (
+            ) : branches && branches.length > 0 ? (
               <View style={styles.branchGrid}>
-                {branches?.map((branch) => (
+                {branches.map((branch) => (
                   <TouchableOpacity key={branch.id} style={[styles.branchCard, selectedBranch?.id === branch.id && styles.branchCardSelected]} onPress={() => setSelectedBranch(branch)} activeOpacity={0.7}>
                     <MaterialCommunityIcons name="school" size={24} color={selectedBranch?.id === branch.id ? Colors.primary : Colors.textSecondary} />
                     <Text style={[styles.branchName, selectedBranch?.id === branch.id && styles.branchNameSelected]}>{branch.name_en}</Text>
@@ -77,6 +77,8 @@ const CreateTestScreen = () => {
                   </TouchableOpacity>
                 ))}
               </View>
+            ) : (
+              <Text style={styles.branchName}>No branches available</Text>
             )}
           </Card.Content>
         </Card>

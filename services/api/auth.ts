@@ -58,6 +58,18 @@ export async function devLogin(email: string, password?: string): Promise<DevLog
 	return response;
 }
 
+// Regular login for users who signed up with username/password
+export async function regularLogin(email: string, password: string): Promise<DevLoginResponse> {
+	const response = await apiRequest<DevLoginResponse>(API_ENDPOINTS.auth.regularLogin, {
+		method: "POST",
+		body: { email, password },
+	});
+	if (response.access) {
+		setTokens(response.access, response.refresh);
+	}
+	return response;
+}
+
 // Direct JWT token obtain using SimpleJWT's TokenObtainPairView
 export async function obtainTokenPair(
 	credentials: { username?: string; email?: string; password: string },

@@ -8,10 +8,16 @@ import { Colors } from '../../constants/colors';
 import { Spacing, BorderRadius } from '../../constants/typography';
 import { useAuth } from '../../hooks/useAuth';
 
+// Hardcoded credentials for development/testing purposes
+const DEV_CREDENTIALS = {
+  username: 'admin',
+  password: 'admin',
+};
+
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, devLogin, googleLogin, isLoading, error: authError } = useAuth();
-  const [showDevLogin, setShowDevLogin] = useState(false);
+  // googleLogin is available but not used until Google OAuth is configured
+  const { regularLogin, devLogin, isLoading, error: authError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -19,41 +25,52 @@ export default function LoginScreen() {
   const handleGoogleLogin = async () => {
     setError(null);
     try {
-      // TODO: Implement actual Google OAuth with expo-auth-session
-      // For now, redirect to profile setup
-      router.push('/(auth)/profile-setup');
-    } catch (err) {
+      // TODO: Implement Google OAuth with expo-auth-session
+      // The googleLogin function in useAuth is ready to accept the access_token from Google
+      // Once you have Google OAuth configured, get the access_token and call:
+      // await googleLogin({ access_token: 'your_google_access_token' });
+      // Then navigate to the main app:
+      // router.replace('/(tabs)');
+
+      // For now, show a message that Google login is not yet configured
+      setError('Google login is not yet configured. Please use Email Login or Sign Up.');
+    } catch {
       setError('Google sign-in failed. Please try again.');
     }
   };
 
-  const handleDevLogin = async () => {
-    if (!email || !password) {
-      setError('Please enter email and password');
+  const handleEmailLogin = async () => {
+    const loginEmail = email.trim();
+    const loginPassword = password.trim();
+
+    if (!loginEmail || !loginPassword) {
+      setError('Please enter both email and password.');
       return;
     }
+
     setError(null);
     try {
-      await devLogin(email, password);
+      await regularLogin(loginEmail, loginPassword);
       router.replace('/(tabs)');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please check your credentials.');
     }
   };
 
-  const handleEmailLogin = async () => {
-    if (!email || !password) {
-      setError('Please enter email and password');
-      return;
-    }
+  const handleDevLogin = async () => {
+    // Use hardcoded credentials for quick testing (dev mode only)
     setError(null);
     try {
-      await login({ email, password });
+      await devLogin(DEV_CREDENTIALS.username, DEV_CREDENTIALS.password);
       router.replace('/(tabs)');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please check your credentials.');
+      setError(err instanceof Error ? err.message : 'Dev login failed.');
     }
   };
+
+  // Note: googleLogin from useAuth is available for future Google OAuth implementation
+  // When implementing Google OAuth, uncomment and use in handleGoogleLogin:
+  // const response = await googleLogin({ access_token: googleAccessToken });
 
   const displayError = error || authError;
 
@@ -89,11 +106,49 @@ export default function LoginScreen() {
               </View>
             )}
 
+            {/* Email/Password Login Form */}
+            <View style={styles.emailLoginForm}>
+              <TextInput
+                label="Email or Username"
+                value={email}
+                onChangeText={setEmail}
+                mode="outlined"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                style={styles.input}
+                left={<TextInput.Icon icon="email" />}
+              />
+              <TextInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                mode="outlined"
+                secureTextEntry
+                style={styles.input}
+                left={<TextInput.Icon icon="lock" />}
+              />
+              <Button
+                mode="contained"
+                onPress={handleEmailLogin}
+                loading={isLoading}
+                disabled={isLoading}
+                style={styles.loginButton}
+                contentStyle={styles.buttonContent}
+              >
+                Sign In
+              </Button>
+            </View>
+
+            <View style={styles.dividerContainer}>
+              <Divider style={styles.divider} />
+              <Text style={styles.dividerText}>or</Text>
+              <Divider style={styles.divider} />
+            </View>
+
             {/* Google Sign In Button */}
             <Button
-              mode="contained"
+              mode="outlined"
               onPress={handleGoogleLogin}
-              loading={isLoading && !showDevLogin}
               disabled={isLoading}
               style={styles.googleButton}
               contentStyle={styles.buttonContent}
@@ -104,55 +159,31 @@ export default function LoginScreen() {
               Continue with Google
             </Button>
 
-            <View style={styles.dividerContainer}>
-              <Divider style={styles.divider} />
-              <Text style={styles.dividerText}>or</Text>
-              <Divider style={styles.divider} />
-            </View>
-
-            {/* Dev Login Toggle */}
-            <Button
-              mode="outlined"
-              onPress={() => setShowDevLogin(!showDevLogin)}
-              style={styles.devToggleButton}
-              icon={showDevLogin ? 'chevron-up' : 'chevron-down'}
-            >
-              Developer Login
-            </Button>
-
-            {showDevLogin && (
-              <View style={styles.devLoginForm}>
-                <TextInput
-                  label="Email"
-                  value={email}
-                  onChangeText={setEmail}
-                  mode="outlined"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  style={styles.input}
-                  left={<TextInput.Icon icon="email" />}
-                />
-                <TextInput
-                  label="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  mode="outlined"
-                  secureTextEntry
-                  style={styles.input}
-                  left={<TextInput.Icon icon="lock" />}
-                />
-                <Button
-                  mode="contained"
-                  onPress={handleDevLogin}
-                  loading={isLoading && showDevLogin}
-                  disabled={isLoading}
-                  style={styles.loginButton}
-                  contentStyle={styles.buttonContent}
-                >
-                  Sign In
-                </Button>
-              </View>
+            {/* Dev Login Button (for quick testing) */}
+            {__DEV__ && (
+              <Button
+                mode="text"
+                onPress={handleDevLogin}
+                disabled={isLoading}
+                style={styles.devButton}
+                textColor={Colors.textTertiary}
+              >
+                Quick Dev Login (admin/admin)
+              </Button>
             )}
+          </View>
+
+          {/* Sign Up Link */}
+          <View style={styles.signUpContainer}>
+            <Text style={styles.signUpText}>Don&apos;t have an account? </Text>
+            <Button
+              mode="text"
+              onPress={() => router.push('/(auth)/signup')}
+              textColor={Colors.white}
+              compact
+            >
+              Sign Up
+            </Button>
           </View>
 
           {/* Footer */}
@@ -241,8 +272,11 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.sm,
     flex: 1,
   },
+  emailLoginForm: {
+    marginBottom: Spacing.base,
+  },
   googleButton: {
-    backgroundColor: Colors.primary,
+    borderColor: Colors.border,
     borderRadius: BorderRadius.lg,
   },
   buttonContent: {
@@ -261,10 +295,7 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.base,
     color: Colors.textTertiary,
   },
-  devToggleButton: {
-    borderColor: Colors.border,
-  },
-  devLoginForm: {
+  devButton: {
     marginTop: Spacing.base,
   },
   input: {
@@ -274,6 +305,17 @@ const styles = StyleSheet.create({
   loginButton: {
     borderRadius: BorderRadius.lg,
     marginTop: Spacing.sm,
+    backgroundColor: Colors.primary,
+  },
+  signUpContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.xl,
+  },
+  signUpText: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   footer: {
     paddingVertical: Spacing['2xl'],

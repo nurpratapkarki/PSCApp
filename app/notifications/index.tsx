@@ -8,6 +8,8 @@ import { usePaginatedApi } from '../../hooks/usePaginatedApi';
 import { Notification } from '../../types/contribution.types';
 import { Colors } from '../../constants/colors';
 import { Spacing } from '../../constants/typography';
+import { markNotificationRead, markAllNotificationsRead } from '../../services/api/notifications';
+import { useAuthStore } from '../../store/authStore';
 
 type NotificationCategory = 'ALL' | 'UNREAD' | 'SYSTEM' | 'ACHIEVEMENT';
 
@@ -97,7 +99,9 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const [category, setCategory] = useState<NotificationCategory>('ALL');
   const [refreshing, setRefreshing] = useState(false);
-  
+  const [markingRead, setMarkingRead] = useState<number | null>(null);
+  const accessToken = useAuthStore((state) => state.accessToken);
+
   const { data: notifications, status, refetch } = usePaginatedApi<Notification>('/api/notifications/');
 
   const filteredNotifications = useMemo(() => {
@@ -140,15 +144,27 @@ export default function NotificationsScreen() {
   };
 
   const handleMarkRead = async (id: number) => {
-    // TODO: Call API to mark notification as read
-    console.log('Marking notification as read:', id);
-    refetch();
+    try {
+      setMarkingRead(id);
+      await markNotificationRead(id, accessToken);
+      await refetch();
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    } finally {
+      setMarkingRead(null);
+    }
   };
 
   const handleMarkAllRead = async () => {
-    // TODO: Call API to mark all notifications as read
-    console.log('Marking all notifications as read');
-    refetch();
+    try {
+      setMarkingRead(-1); // Use -1 to indicate "marking all"
+      await markAllNotificationsRead(accessToken);
+      await refetch();
+    } catch (err) {
+      console.error('Failed to mark all notifications as read:', err);
+    } finally {
+      setMarkingRead(null);
+    }
   };
 
   const categories: { key: NotificationCategory; label: string; icon: string }[] = [

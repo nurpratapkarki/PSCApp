@@ -9,7 +9,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 
 
 
-import { View, StyleSheet, SafeAreaView, ActivityIndicator, BackHandler, Alert, ScrollView } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, BackHandler, Alert, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 
@@ -109,7 +110,7 @@ const TestAttemptScreen = () => {
 
 
 
-    const { execute: submitTest, status: submitStatus } = useApi<UserAttempt>(userAttempt ? `/api/attempts/${userAttempt.id}/submit/` : '', true);
+    const { execute: submitTest, status: submitStatus } = useApi<UserAttempt>(userAttempt ? `/api/attempts/${userAttempt.id}/submit/` : '', true, { method: 'POST' });
 
 
 

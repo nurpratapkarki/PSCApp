@@ -1,18 +1,26 @@
 import { Stack } from "expo-router";
+import { Colors } from "../../constants/colors";
 
 export default function TestsLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: true,
+        headerShown: false,
+        headerStyle: {
+          backgroundColor: Colors.primary,
+        },
+        headerTintColor: Colors.white,
+        headerTitleStyle: {
+          fontWeight: '600',
+        },
       }}
     >
-      <Stack.Screen name="create" options={{ title: "Create Test" }} />
-      <Stack.Screen name="history" options={{ title: "Test History" }} />
-      <Stack.Screen name="[testId]/index" options={{ title: "Test Details" }} />
-      <Stack.Screen name="[testId]/instructions" options={{ title: "Instructions" }} />
-      <Stack.Screen name="[testId]/attempt" options={{ title: "Test", headerBackVisible: false }} />
-      <Stack.Screen name="[testId]/results" options={{ title: "Results", headerBackVisible: false }} />
+      <Stack.Screen name="create" options={{ headerShown: false }} />
+      <Stack.Screen name="history" options={{ headerShown: false }} />
+      <Stack.Screen name="[testId]/index" options={{ headerShown: false }} />
+      <Stack.Screen name="[testId]/instructions" options={{ headerShown: false }} />
+      <Stack.Screen name="[testId]/attempt" options={{ headerShown: false }} />
+      <Stack.Screen name="[testId]/results" options={{ headerShown: false }} />
     </Stack>
   );
 }
