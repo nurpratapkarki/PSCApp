@@ -302,6 +302,7 @@ REST_FRAMEWORK = {
         "rest_framework.parsers.MultiPartParser",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -412,6 +413,8 @@ REST_AUTH = {
     "USE_JWT": True,
     "JWT_AUTH_COOKIE": "psc-auth",
     "JWT_AUTH_REFRESH_COOKIE": "psc-refresh-token",
+    "JWT_AUTH_HTTPONLY": False,  # Allow JS access to tokens
+    "SESSION_LOGIN": False,  # Disable session login for API
 }
 # Authenticate if local account with this email address already exists
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True

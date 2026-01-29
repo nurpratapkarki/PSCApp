@@ -18,21 +18,46 @@ from src.models import (
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     """
-    Create UserProfile automatically for every new User (including Google OAuth users)
+    Create UserProfile automatically for every new User (including Google OAuth users).
+    Also handles linking existing profiles when a Google user logs in with an email
+    that already exists from a regular signup.
     """
     if created:
-        UserProfile.objects.get_or_create(
-            google_auth_user=instance,
-            defaults={
-                "email": instance.email,
-                "full_name": f"{instance.first_name} {instance.last_name}".strip()
-                or instance.username,
-            },
-        )
+        # First, check if a profile already exists with this email (from a previous signup)
+        existing_profile = UserProfile.objects.filter(email=instance.email).first()
+
+        if existing_profile:
+            # Link the existing profile to this new user (Google OAuth login with existing email)
+            if existing_profile.google_auth_user is None or existing_profile.google_auth_user == instance:
+                existing_profile.google_auth_user = instance
+                existing_profile.save(update_fields=["google_auth_user"])
+            # If profile is linked to a different user, we have a conflict - log it but don't crash
+            else:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    f"UserProfile with email {instance.email} already linked to user {existing_profile.google_auth_user.id}. "
+                    f"New user {instance.id} was not linked."
+                )
+        else:
+            # No existing profile, create a new one
+            UserProfile.objects.create(
+                google_auth_user=instance,
+                email=instance.email,
+                full_name=f"{instance.first_name} {instance.last_name}".strip() or instance.username,
+            )
     else:
-        # Sync simple fields if needed?
-        # instance.profile.save()
-        pass
+        # User updated - sync profile if it exists
+        try:
+            profile = instance.profile
+            # Optionally sync email if changed
+            if profile.email != instance.email and instance.email:
+                # Check if the new email would conflict
+                if not UserProfile.objects.filter(email=instance.email).exclude(pk=profile.pk).exists():
+                    profile.email = instance.email
+                    profile.save(update_fields=["email"])
+        except UserProfile.DoesNotExist:
+            pass
 
 
 @receiver(post_save, sender=UserAnswer)

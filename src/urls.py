@@ -13,10 +13,11 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from src.api.auth.views import DevLoginView, GoogleLogin
+from src.api.auth.views import DevLoginView, GoogleLogin, RegularLoginView
 
 urlpatterns = [
     path("api/auth/dev-login/", DevLoginView.as_view(), name="dev_login"),
+    path("api/auth/regular-login/", RegularLoginView.as_view(), name="regular_login"),
     path("api/auth/user/", include("src.api.user.urls")),
     path("api/auth/registration/", include("dj_rest_auth.registration.urls")),
     path("api/auth/", include("dj_rest_auth.urls")),

@@ -16,6 +16,9 @@ class UserProfile(models.Model):
     google_auth_user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="profile"
     )
+    profile_picture = models.ImageField(
+        upload_to="profile_pictures/", null=True, blank=True
+    )
     full_name = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(

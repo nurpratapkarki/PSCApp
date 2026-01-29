@@ -15,6 +15,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "id",
             "full_name",
             "email",
+            "profile_picture",
             "phone_number",
             "preferred_language",
             "target_branch",
