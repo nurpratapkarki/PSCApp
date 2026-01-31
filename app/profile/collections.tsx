@@ -85,7 +85,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({ collection, onPress, on
 
 export default function CollectionsScreen() {
   const router = useRouter();
-  const { data: collections, status, refetch } = usePaginatedApi<StudyCollection>('/api/collections/');
+  const { data: collections, status } = usePaginatedApi<StudyCollection>('/api/collections/');
 
   const handleCollectionPress = (collection: StudyCollection) => {
     router.push(`/profile/${collection.id}` as any);

@@ -99,7 +99,6 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const [category, setCategory] = useState<NotificationCategory>('ALL');
   const [refreshing, setRefreshing] = useState(false);
-  const [markingRead, setMarkingRead] = useState<number | null>(null);
   const accessToken = useAuthStore((state) => state.accessToken);
 
   const { data: notifications, status, refetch } = usePaginatedApi<Notification>('/api/notifications/');
@@ -145,25 +144,19 @@ export default function NotificationsScreen() {
 
   const handleMarkRead = async (id: number) => {
     try {
-      setMarkingRead(id);
       await markNotificationRead(id, accessToken);
       await refetch();
     } catch (err) {
       console.error('Failed to mark notification as read:', err);
-    } finally {
-      setMarkingRead(null);
     }
   };
 
   const handleMarkAllRead = async () => {
     try {
-      setMarkingRead(-1); // Use -1 to indicate "marking all"
       await markAllNotificationsRead(accessToken);
       await refetch();
     } catch (err) {
       console.error('Failed to mark all notifications as read:', err);
-    } finally {
-      setMarkingRead(null);
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { Button, Card, Text, ActivityIndicator, ProgressBar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';

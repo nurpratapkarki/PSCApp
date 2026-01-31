@@ -5,7 +5,6 @@ import {
   Dimensions,
   FlatList,
   Animated,
-  Image,
 } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { useRouter } from 'expo-router';
@@ -14,7 +13,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../constants/colors';
 import { Spacing, BorderRadius } from '../../constants/typography';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 interface OnboardingSlide {
   id: string;

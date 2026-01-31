@@ -1,4 +1,4 @@
-import type { UserProfile, UserProfileUpdate } from "../../types/user.types";
+import type { UserProfile, UserProfileUpdate, ReactNativeImageAsset } from "../../types/user.types";
 import { API_ENDPOINTS } from "../../config/api.config";
 import { apiRequest, uploadFile } from "./client";
 
@@ -19,14 +19,30 @@ export async function getCurrentUserProfile(
 }
 
 /**
+ * Check if a value is a React Native image asset
+ */
+function isReactNativeImageAsset(value: unknown): value is ReactNativeImageAsset {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "uri" in value &&
+    "name" in value &&
+    "type" in value
+  );
+}
+
+/**
  * Update the current user's profile.
+ * Supports both web File objects and React Native image assets for profile_picture.
  */
 export async function updateUserProfile(
   updates: UserProfileUpdate,
   token?: string | null,
 ): Promise<UserProfile> {
-  // If there's a profile picture file, we need to use FormData
-  if (updates.profile_picture instanceof File) {
+  const profilePicture = updates.profile_picture;
+  
+  // If there's a profile picture, we need to use FormData
+  if (profilePicture instanceof File || isReactNativeImageAsset(profilePicture)) {
     const formData = new FormData();
     
     // Add all non-file fields
@@ -36,13 +52,21 @@ export async function updateUserProfile(
       }
     });
     
-    // Add the file
-    formData.append("profile_picture", updates.profile_picture);
+    // Add the file - handle both File and React Native image asset
+    if (profilePicture instanceof File) {
+      formData.append("profile_picture", profilePicture);
+    } else {
+      // React Native's FormData.append accepts { uri, name, type } format for file uploads,
+      // which is different from the web FormData API that expects Blob/File objects.
+      // This is a React Native-specific extension to support native file system URIs.
+      // @ts-expect-error FormData in React Native accepts { uri, name, type } object format
+      formData.append("profile_picture", profilePicture);
+    }
     
-    return uploadFile<UserProfile>(API_ENDPOINTS.auth.user, formData, token);
+    return uploadFile<UserProfile>(API_ENDPOINTS.auth.user, formData, token, "PATCH");
   }
   
-  // Regular JSON update
+  // Regular JSON update (no file)
   return apiRequest<UserProfile>(API_ENDPOINTS.auth.user, {
     method: "PATCH",
     body: updates,

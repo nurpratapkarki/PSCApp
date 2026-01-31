@@ -42,7 +42,6 @@ export default function AddQuestionScreen() {
     { text: '', isCorrect: false },
   ]);
   const [explanation, setExplanation] = useState('');
-  const [explanationNp, setExplanationNp] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Bulk upload state
@@ -91,7 +90,7 @@ export default function AddQuestionScreen() {
         question_text_np: questionTextNp || questionText,
         category: selectedCategory.id,
         explanation_en: explanation,
-        explanation_np: explanationNp || explanation,
+        explanation_np: explanation, // Use same explanation for both languages if no Nepali input
         consent_given: true,
         answers: answers.map((a, index) => ({
           answer_text_en: a.text,

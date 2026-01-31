@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, FlatList } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Card, Text, ActivityIndicator, Avatar, Chip } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';

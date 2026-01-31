@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, Card, ProgressBar, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -7,8 +7,6 @@ import { useApi } from '../../hooks/useApi';
 import { UserStatistics } from '../../types/contribution.types';
 import { Colors } from '../../constants/colors';
 import { Spacing, BorderRadius } from '../../constants/typography';
-
-const { width } = Dimensions.get('window');
 
 interface CategoryPerformance {
   category_name: string;

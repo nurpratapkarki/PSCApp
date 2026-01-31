@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text, Button, Card, RadioButton, ActivityIndicator, Chip } from 'react-native-paper';
 import { useRouter } from 'expo-router';

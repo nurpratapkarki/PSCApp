@@ -22,7 +22,7 @@ const QuestionScreen = () => {
   const categoryId = params.categoryId;
   const count = params.count || '10';
 
-  const { data: questions, status, error, execute: fetchQuestions } = usePaginatedApi<Question>('/api/questions/', true);
+  const { data: questions, status, execute: fetchQuestions } = usePaginatedApi<Question>('/api/questions/', true);
 
   useEffect(() => {
     if (categoryId) {
@@ -40,13 +40,6 @@ const QuestionScreen = () => {
   const totalQuestions = questions?.length || 0;
   const progress = totalQuestions > 0 ? (currentIndex + 1) / totalQuestions : 0;
 
-  useEffect(() => {
-    if (status !== 'success' || showExplanation) return;
-    if (timeLeft === 0) { handleSubmitAnswer(); return; }
-    const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
-    return () => clearInterval(timer);
-  }, [timeLeft, status, showExplanation]);
-
   const handleSelectAnswer = (answerId: number) => {
     if (!showExplanation) setSelectedAnswer(answerId);
   };
@@ -58,6 +51,13 @@ const QuestionScreen = () => {
     setAnswers((prev) => [...prev, { questionId: currentQuestion.id, selectedAnswerId: selectedAnswer, isCorrect, correctAnswerId: correctAnswer?.id || 0 }]);
     setShowExplanation(true);
   }, [currentQuestion, selectedAnswer]);
+
+  useEffect(() => {
+    if (status !== 'success' || showExplanation) return;
+    if (timeLeft === 0) { handleSubmitAnswer(); return; }
+    const timer = setInterval(() => setTimeLeft((t) => t - 1), 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft, status, showExplanation, handleSubmitAnswer]);
 
   const handleNext = () => {
     if (currentIndex < totalQuestions - 1) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Card, Text, ActivityIndicator, SegmentedButtons, Avatar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,11 +14,6 @@ const getRankColor = (rank: number) => {
   if (rank === 2) return '#C0C0C0';
   if (rank === 3) return '#CD7F32';
   return Colors.textSecondary;
-};
-
-const getRankIcon = (rank: number) => {
-  if (rank <= 3) return 'crown';
-  return null;
 };
 
 const LeaderboardItem = ({ entry, isCurrentUser }: { entry: LeaderboardEntry; isCurrentUser?: boolean }) => {
