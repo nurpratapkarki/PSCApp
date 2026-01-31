@@ -56,8 +56,10 @@ export async function updateUserProfile(
     if (profilePicture instanceof File) {
       formData.append("profile_picture", profilePicture);
     } else {
-      // React Native format: { uri, name, type }
-      // @ts-ignore - FormData accepts this format in React Native
+      // React Native's FormData.append accepts { uri, name, type } format for file uploads,
+      // which is different from the web FormData API that expects Blob/File objects.
+      // This is a React Native-specific extension to support native file system URIs.
+      // @ts-expect-error FormData in React Native accepts { uri, name, type } object format
       formData.append("profile_picture", profilePicture);
     }
     
