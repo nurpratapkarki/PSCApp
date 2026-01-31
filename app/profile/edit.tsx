@@ -8,7 +8,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useApi } from '../../hooks/useApi';
 import { User } from '../../types/auth.types';
 import { Branch } from '../../types/category.types';
-import { updateUserProfile } from '../../services/api/profile';
 import { useAuthStore } from '../../store/authStore';
 import { Colors } from '../../constants/colors';
 import { Spacing, BorderRadius } from '../../constants/typography';

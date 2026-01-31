@@ -42,7 +42,6 @@ export default function AddQuestionScreen() {
     { text: '', isCorrect: false },
   ]);
   const [explanation, setExplanation] = useState('');
-  const [explanationNp, setExplanationNp] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Bulk upload state

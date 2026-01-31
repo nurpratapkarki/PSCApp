@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { Button, Card, Text, TextInput, ActivityIndicator, Chip } from 'react-native-paper';
+import { Button, Card, Text, TextInput, ActivityIndicator } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useApi } from '../../hooks/useApi';
