@@ -31,6 +31,13 @@ export interface UserProfile {
   sub_branch_name?: string;
 }
 
+// React Native image picker result format
+export interface ReactNativeImageAsset {
+  uri: string;
+  name: string;
+  type: string;
+}
+
 // User Profile Update (matches README)
 export interface UserProfileUpdate {
   full_name?: string;
@@ -38,7 +45,7 @@ export interface UserProfileUpdate {
   preferred_language?: LanguagePreference;
   target_branch?: number | null;
   target_sub_branch?: number | null;
-  profile_picture?: File | null;
+  profile_picture?: File | ReactNativeImageAsset | null;
 }
 
 // Badge (matches README)

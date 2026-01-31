@@ -154,6 +154,7 @@ export async function uploadFile<T>(
   endpoint: string,
   formData: FormData,
   token?: string | null,
+  method: HttpMethod = "POST",
 ): Promise<T> {
   const url = endpoint.startsWith("http")
     ? endpoint
@@ -169,7 +170,7 @@ export async function uploadFile<T>(
   }
 
   let response = await fetch(url, {
-    method: "POST",
+    method,
     headers,
     body: formData,
     credentials: "include",
@@ -181,7 +182,7 @@ export async function uploadFile<T>(
     if (newToken) {
       headers.Authorization = `Bearer ${newToken}`;
       response = await fetch(url, {
-        method: "POST",
+        method,
         headers,
         body: formData,
         credentials: "include",

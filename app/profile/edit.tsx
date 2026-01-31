@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useApi } from '../../hooks/useApi';
 import { User } from '../../types/auth.types';
 import { Branch } from '../../types/category.types';
+import { updateUserProfile } from '../../services/api/profile';
 import { useAuthStore } from '../../store/authStore';
 import { Colors } from '../../constants/colors';
 import { Spacing, BorderRadius } from '../../constants/typography';
@@ -65,18 +66,18 @@ export default function EditProfileScreen() {
         throw new Error('Authentication token not found');
       }
 
-      // Build FormData for file upload or regular update
-      const formData = new FormData();
-
+      // Build update payload
+      const updates: Record<string, unknown> = {};
+      
       // Add changed fields
       if (fullName !== user?.profile?.full_name) {
-        formData.append('full_name', fullName.trim());
+        updates.full_name = fullName.trim();
       }
       if (phone !== user?.profile?.phone_number) {
-        formData.append('phone_number', phone.trim());
+        updates.phone_number = phone.trim();
       }
       if (selectedBranch !== user?.profile?.branch && selectedBranch !== null) {
-        formData.append('target_branch', String(selectedBranch));
+        updates.target_branch = selectedBranch;
       }
 
       // Handle image upload
@@ -85,29 +86,15 @@ export default function EditProfileScreen() {
         const match = /\.(\w+)$/.exec(filename);
         const type = match ? `image/${match[1]}` : 'image/jpeg';
 
-        // @ts-ignore - FormData accepts this format in React Native
-        formData.append('profile_picture', {
+        updates.profile_picture = {
           uri: selectedImage,
           name: filename,
           type,
-        });
+        };
       }
 
-      // Use fetch directly with FormData for proper multipart handling
-      const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:8000';
-      const response = await fetch(`${API_BASE_URL}/api/auth/user/`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          // Don't set Content-Type - let fetch set it with boundary for FormData
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || errorData.error || 'Failed to update profile');
-      }
+      // Use the profile API service
+      await updateUserProfile(updates, token);
 
       // Refetch user data to update UI
       await refetchUser();
